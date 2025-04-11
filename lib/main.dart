@@ -51,32 +51,72 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   debugPrint("🔔 Background message: ${message.messageId}");
 }
 
+
+// void main() async {
+//   const String webUrl = String.fromEnvironment('WEB_URL');
+//   WidgetsFlutterBinding.ensureInitialized();
+//
+//   const initSettingsAndroid = AndroidInitializationSettings('@mipmap/ic_launcher');
+//   const initSettings = InitializationSettings(android: initSettingsAndroid);
+//
+//   await flutterLocalNotificationsPlugin.initialize(
+//     initSettings,
+//     onDidReceiveNotificationResponse: (NotificationResponse response) {
+//       debugPrint("🔔 Notification tapped: ${response.payload}");
+//     },
+//   );
+//
+//   if (pushNotify) {
+//     await Firebase.initializeApp(options: await loadFirebaseOptionsFromJson());
+//
+//     FirebaseMessaging messaging = FirebaseMessaging.instance;
+//     await messaging.setAutoInitEnabled(true);
+//     await messaging.requestPermission();
+//
+//     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+//
+//     messaging.getToken().then((token) {
+//       debugPrint("✅ FCM Token: $token");
+//     });
+//   }
+//
+//   runApp(MyApp(webUrl: webUrl));
+// }
 void main() async {
   const String webUrl = String.fromEnvironment('WEB_URL');
   WidgetsFlutterBinding.ensureInitialized();
 
-  const initSettingsAndroid = AndroidInitializationSettings('@mipmap/ic_launcher');
-  const initSettings = InitializationSettings(android: initSettingsAndroid);
+  const AndroidInitializationSettings initializationSettingsAndroid =
+  AndroidInitializationSettings('@mipmap/ic_launcher');
+
+  const InitializationSettings initializationSettings =
+  InitializationSettings(android: initializationSettingsAndroid);
 
   await flutterLocalNotificationsPlugin.initialize(
-    initSettings,
+    initializationSettings,
     onDidReceiveNotificationResponse: (NotificationResponse response) {
       debugPrint("🔔 Notification tapped: ${response.payload}");
     },
   );
 
-  if (pushNotify) {
-    await Firebase.initializeApp(options: await loadFirebaseOptionsFromJson());
+  debugPrint("Push Notify: $pushNotify \n WEBURL: $webUrl \n");
+
+  if (pushNotify == true) {
+    await Firebase.initializeApp(
+      options: await loadFirebaseOptionsFromJson(),
+    );
 
     FirebaseMessaging messaging = FirebaseMessaging.instance;
+    messaging.getToken().then((token) {
+      debugPrint("✅ FCM Token: $token");
+    });
+
     await messaging.setAutoInitEnabled(true);
     await messaging.requestPermission();
 
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-
-    messaging.getToken().then((token) {
-      debugPrint("✅ FCM Token: $token");
-    });
+  } else {
+    debugPrint("🚫 Firebase not initialized (pushNotify: $pushNotify, isWeb: $kIsWeb)");
   }
 
   runApp(MyApp(webUrl: webUrl));
@@ -93,88 +133,67 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   final GlobalKey webViewKey = GlobalKey();
   InAppWebViewController? webViewController;
-  PullToRefreshController? pullToRefreshController;
+  late PullToRefreshController? pullToRefreshController;
+
+  String url = "";
+  double progress = 0;
+  final urlController = TextEditingController();
   DateTime? _lastBackPressed;
-String Web_URL = '';
-  @override
-  void initState() {
-    super.initState();
-setState(() {
-  Web_URL = widget.webUrl;
-});
-    if (pushNotify) {
-      // FirebaseMessaging.instance.getToken().then((token) {
-      //   debugPrint('✅ FCM Token: $token');
-      // });
-      setupFirebaseMessaging();
-    }
 
-    requestPermissions();
-    _checkInternetConnection();
-
-    Connectivity().onConnectivityChanged.listen((_) {
-      _checkInternetConnection();
-    });
-
-    if (!kIsWeb && [TargetPlatform.android, TargetPlatform.iOS].contains(defaultTargetPlatform)) {
-      pullToRefreshController = PullToRefreshController(
-        settings: PullToRefreshSettings(color: Colors.blue),
-        onRefresh: () async {
-          if (defaultTargetPlatform == TargetPlatform.android) {
-            webViewController?.reload();
-          } else {
-            webViewController?.loadUrl(
-              urlRequest: URLRequest(url: await webViewController?.getUrl()),
-            );
-          }
-        },
-      );
-    }
-  }
-
-  void requestPermissions() async {
-    if (isCameraEnabled) await Permission.camera.request();
-    if (isLocationEnabled) await Permission.location.request();
-    if (isMicEnabled) await Permission.microphone.request();
-    if (isNotificationEnabled) await Permission.notification.request();
-    if (isContactEnabled) await Permission.contacts.request();
-    if (isSMSEnabled) await Permission.sms.request();
-    if (isPhoneEnabled) await Permission.phone.request();
-    if (isBluetoothEnabled) await Permission.bluetooth.request();
-    await Permission.storage.request(); // Always request storage
-  }
-
-  void setupFirebaseMessaging() {
+  InAppWebViewSettings settings = InAppWebViewSettings(
+    isInspectable: kDebugMode,
+    mediaPlaybackRequiresUserGesture: false,
+    allowsInlineMediaPlayback: true,
+    iframeAllow: "camera; microphone",
+    iframeAllowFullscreen: true,
+  );
+  void setupFirebaseMessaging() async {
     FirebaseMessaging messaging = FirebaseMessaging.instance;
 
     if (Platform.isIOS) {
-      messaging.requestPermission(alert: true, badge: true, sound: true);
+      await messaging.requestPermission(alert: true, badge: true, sound: true);
     }
 
-    messaging.subscribeToTopic('all_users');
-    if (Platform.isAndroid) messaging.subscribeToTopic('android_users');
-    if (Platform.isIOS) messaging.subscribeToTopic('ios_users');
+    if (Platform.isAndroid) {
+      await messaging.subscribeToTopic('android_users');
+    } else if (Platform.isIOS) {
+      await messaging.subscribeToTopic('ios_users');
+    }
+
+    await messaging.subscribeToTopic('all_users');
+
+    AndroidNotificationDetails _defaultAndroidDetails(RemoteNotification notification) {
+      return AndroidNotificationDetails(
+        'default_channel',
+        'Default',
+        channelDescription: 'Default notification channel',
+        importance: Importance.max,
+        priority: Priority.high,
+        playSound: true,
+        icon: '@mipmap/ic_launcher',
+      );
+    }
 
     FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
-      final notification = message.notification;
-      final imageUrl = message.notification?.android?.imageUrl ?? message.data['image'];
       final internalUrl = message.data['url'];
+      final imageUrl = message.notification?.android?.imageUrl ?? message.data['image'];
+      final notification = message.notification;
+      final android = notification?.android;
 
       if (internalUrl != null && webViewController != null) {
-        setState(() {
-          Web_URL = internalUrl;
-        });
-        // webViewController?.loadUrl(urlRequest: URLRequest(url: WebUri(internalUrl)));
+        webViewController?.loadUrl(urlRequest: URLRequest(url: WebUri(internalUrl)));
       }
 
-      if (notification != null) {
+      if (notification != null && android != null) {
         AndroidNotificationDetails androidDetails;
 
-        try {
-          if (imageUrl != null && imageUrl.isNotEmpty) {
+        if (imageUrl != null && imageUrl.isNotEmpty) {
+          try {
             final http.Response response = await http.get(Uri.parse(imageUrl));
-            final filePath = '${(await getTemporaryDirectory()).path}/notif_image.jpg';
-            await File(filePath).writeAsBytes(response.bodyBytes);
+            final tempDir = await getTemporaryDirectory();
+            final filePath = '${tempDir.path}/notif_image.jpg';
+            final file = File(filePath);
+            await file.writeAsBytes(response.bodyBytes);
 
             androidDetails = AndroidNotificationDetails(
               'default_channel',
@@ -193,52 +212,101 @@ setState(() {
                 htmlFormatSummaryText: true,
               ),
             );
-
-          } else {
-            androidDetails = AndroidNotificationDetails(
-              'default_channel',
-              'Default',
-              channelDescription: 'Default notification channel',
-              importance: Importance.max,
-              priority: Priority.high,
-              playSound: true,
-              icon: '@mipmap/ic_launcher',
-            );
+          } catch (e) {
+            print('❌ Failed to load image: $e');
+            androidDetails = _defaultAndroidDetails(notification);
           }
-
-          flutterLocalNotificationsPlugin.show(
-            notification.hashCode,
-            notification.title,
-            notification.body,
-            NotificationDetails(android: androidDetails),
-          );
-        } catch (e) {
-          debugPrint('❌ Notification image error: $e');
+        } else {
+          androidDetails = _defaultAndroidDetails(notification);
         }
+
+        flutterLocalNotificationsPlugin.show(
+          notification.hashCode,
+          notification.title,
+          notification.body,
+          NotificationDetails(android: androidDetails),
+        );
       }
     });
 
-    // FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-    //   Fluttertoast.showToast(msg: "📲 Opened: ${message.notification?.title}");
-    // });
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      Fluttertoast.showToast(
+          msg: "📲 Opened from Notification: ${message.notification?.title}");
+    });
+  }
+
+  void requestPermissions() async {
+    if (isCameraEnabled) await Permission.camera.request();
+    if (isLocationEnabled) await Permission.location.request();
+    if (isMicEnabled) await Permission.microphone.request();
+    if (isNotificationEnabled) await Permission.notification.request();
+    if (isContactEnabled) await Permission.contacts.request();
+    if (isSMSEnabled) await Permission.sms.request();
+    if (isPhoneEnabled) await Permission.phone.request();
+    if (isBluetoothEnabled) await Permission.bluetooth.request();
+    await Permission.storage.request();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    if (pushNotify == true) {
+      FirebaseMessaging.instance.getToken().then((token) {
+        debugPrint('✅ FCM Token: $token');
+      });
+      setupFirebaseMessaging();
+    }
+
+    Connectivity().onConnectivityChanged.listen((_) {
+      _checkInternetConnection();
+    });
+
+    _checkInternetConnection();
+
+    pullToRefreshController = !kIsWeb &&
+        [TargetPlatform.android, TargetPlatform.iOS].contains(defaultTargetPlatform)
+        ? PullToRefreshController(
+      settings: PullToRefreshSettings(color: Colors.blue),
+      onRefresh: () async {
+        if (defaultTargetPlatform == TargetPlatform.android) {
+          webViewController?.reload();
+        } else if (defaultTargetPlatform == TargetPlatform.iOS) {
+          webViewController?.loadUrl(
+            urlRequest: URLRequest(url: await webViewController?.getUrl()),
+          );
+        }
+      },
+    )
+        : null;
   }
 
   Future<void> _checkInternetConnection() async {
     final result = await Connectivity().checkConnectivity();
-    setState(() {
-      hasInternet = result != ConnectivityResult.none;
-    });
+    final isOnline = result != ConnectivityResult.none;
+    if (mounted) {
+      setState(() {
+        hasInternet = isOnline;
+      });
+    }
   }
 
   Future<bool> _onBackPressed() async {
-    final now = DateTime.now();
-    if (_lastBackPressed == null || now.difference(_lastBackPressed!) > const Duration(seconds: 2)) {
+    DateTime now = DateTime.now();
+    if (_lastBackPressed == null || now.difference(_lastBackPressed!) > Duration(seconds: 2)) {
       _lastBackPressed = now;
-      Fluttertoast.showToast(msg: "Press back again to exit");
+      Fluttertoast.showToast(
+        msg: "Press back again to exit",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: Colors.black54,
+        textColor: Colors.white,
+      );
       return false;
     }
     return true;
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -256,7 +324,7 @@ setState(() {
                   return InAppWebView(
                     key: webViewKey,
                     webViewEnvironment: webViewEnvironment,
-                    initialUrlRequest: URLRequest(url: WebUri(Web_URL)),
+                    initialUrlRequest: URLRequest(url: WebUri(widget.webUrl)),
                     pullToRefreshController: pullToRefreshController,
                     onWebViewCreated: (controller) => webViewController = controller,
                     shouldOverrideUrlLoading: (controller, navigationAction) async {
