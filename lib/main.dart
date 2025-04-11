@@ -18,7 +18,7 @@ import 'package:permission_handler/permission_handler.dart';
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
-bool hasInternet = true;
+bool? hasInternet;
 
 const bool pushNotify = bool.fromEnvironment('PUSH_NOTIFY', defaultValue: false);
 const bool isCameraEnabled = bool.fromEnvironment('IS_CAMERA', defaultValue: false);
@@ -95,15 +95,17 @@ class _MyAppState extends State<MyApp> {
   InAppWebViewController? webViewController;
   PullToRefreshController? pullToRefreshController;
   DateTime? _lastBackPressed;
-
+String Web_URL = '';
   @override
   void initState() {
     super.initState();
-
+setState(() {
+  Web_URL = widget.webUrl;
+});
     if (pushNotify) {
-      FirebaseMessaging.instance.getToken().then((token) {
-        debugPrint('✅ FCM Token: $token');
-      });
+      // FirebaseMessaging.instance.getToken().then((token) {
+      //   debugPrint('✅ FCM Token: $token');
+      // });
       setupFirebaseMessaging();
     }
 
@@ -159,7 +161,10 @@ class _MyAppState extends State<MyApp> {
       final internalUrl = message.data['url'];
 
       if (internalUrl != null && webViewController != null) {
-        webViewController?.loadUrl(urlRequest: URLRequest(url: WebUri(internalUrl)));
+        setState(() {
+          Web_URL = internalUrl;
+        });
+        // webViewController?.loadUrl(urlRequest: URLRequest(url: WebUri(internalUrl)));
       }
 
       if (notification != null) {
@@ -188,6 +193,7 @@ class _MyAppState extends State<MyApp> {
                 htmlFormatSummaryText: true,
               ),
             );
+
           } else {
             androidDetails = AndroidNotificationDetails(
               'default_channel',
@@ -212,9 +218,9 @@ class _MyAppState extends State<MyApp> {
       }
     });
 
-    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      Fluttertoast.showToast(msg: "📲 Opened: ${message.notification?.title}");
-    });
+    // FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+    //   Fluttertoast.showToast(msg: "📲 Opened: ${message.notification?.title}");
+    // });
   }
 
   Future<void> _checkInternetConnection() async {
@@ -242,25 +248,33 @@ class _MyAppState extends State<MyApp> {
         onWillPop: _onBackPressed,
         child: Scaffold(
           body: SafeArea(
-            child: hasInternet
-                ? InAppWebView(
-              key: webViewKey,
-              webViewEnvironment: webViewEnvironment,
-              initialUrlRequest: URLRequest(url: WebUri(widget.webUrl)),
-              pullToRefreshController: pullToRefreshController,
-              onWebViewCreated: (controller) => webViewController = controller,
-              shouldOverrideUrlLoading: (controller, navigationAction) async {
-                final uri = navigationAction.request.url;
-                if (uri != null && !uri.toString().contains(widget.webUrl)) {
-                  if (await canLaunchUrl(uri)) {
-                    await launchUrl(uri, mode: LaunchMode.externalApplication);
-                    return NavigationActionPolicy.CANCEL;
-                  }
+            child: Builder(
+              builder: (context) {
+                if (hasInternet == null) {
+                  return const Center(child: CircularProgressIndicator()); // Loading state
+                } else if (hasInternet == true) {
+                  return InAppWebView(
+                    key: webViewKey,
+                    webViewEnvironment: webViewEnvironment,
+                    initialUrlRequest: URLRequest(url: WebUri(Web_URL)),
+                    pullToRefreshController: pullToRefreshController,
+                    onWebViewCreated: (controller) => webViewController = controller,
+                    shouldOverrideUrlLoading: (controller, navigationAction) async {
+                      final uri = navigationAction.request.url;
+                      if (uri != null && !uri.toString().contains(widget.webUrl)) {
+                        if (await canLaunchUrl(uri)) {
+                          await launchUrl(uri, mode: LaunchMode.externalApplication);
+                          return NavigationActionPolicy.CANCEL;
+                        }
+                      }
+                      return NavigationActionPolicy.ALLOW;
+                    },
+                  );
+                } else {
+                  return const Center(child: Text('📴 No Internet Connection'));
                 }
-                return NavigationActionPolicy.ALLOW;
               },
-            )
-                : Center(child: Text('📴 No Internet Connection')),
+            ),
           ),
         ),
       ),
