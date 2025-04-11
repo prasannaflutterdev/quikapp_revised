@@ -132,10 +132,8 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
     requestPermissions();
+
     if (pushNotify == true) {
-      // FirebaseMessaging.instance.getToken().then((token) {
-      //   debugPrint('✅ FCM Token: $token');
-      // });
       setupFirebaseMessaging();
     }
 
@@ -161,10 +159,10 @@ class _MyAppState extends State<MyApp> {
     )
         : null;
 
-    // ✅ Handle terminated state push
-    FirebaseMessaging.instance.getInitialMessage().then((message) {
+    // ✅ Handle terminated state
+    FirebaseMessaging.instance.getInitialMessage().then((message) async {
       if (message != null) {
-        debugPrint("📲 Opened from terminated state: ${message.data}");
+        await _showLocalNotification(message);
         WidgetsBinding.instance.addPostFrameCallback((_) {
           _handleNotificationNavigation(message);
         });
@@ -172,7 +170,7 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
-  /// ✅ Extracts URL from notification and opens in WebView
+  /// ✅ Navigation from notification
   void _handleNotificationNavigation(RemoteMessage message) {
     final internalUrl = message.data['url'];
     if (internalUrl != null && webViewController != null) {
@@ -184,7 +182,7 @@ class _MyAppState extends State<MyApp> {
     }
   }
 
-  /// ✅ Setup push for foreground + background + topics
+  /// ✅ Setup push notification logic
   void setupFirebaseMessaging() async {
     FirebaseMessaging messaging = FirebaseMessaging.instance;
 
@@ -199,7 +197,26 @@ class _MyAppState extends State<MyApp> {
       await messaging.subscribeToTopic('ios_users');
     }
 
-    AndroidNotificationDetails _defaultAndroidDetails(RemoteNotification notification) {
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
+      await _showLocalNotification(message);
+      _handleNotificationNavigation(message);
+    });
+
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      debugPrint("📲 Opened from background tap: ${message.data}");
+      _handleNotificationNavigation(message);
+    });
+  }
+
+  /// ✅ Local push with optional image
+  Future<void> _showLocalNotification(RemoteMessage message) async {
+    final notification = message.notification;
+    final android = notification?.android;
+    final imageUrl = notification?.android?.imageUrl ?? message.data['image'];
+
+    AndroidNotificationDetails androidDetails;
+
+    AndroidNotificationDetails _defaultAndroidDetails() {
       return AndroidNotificationDetails(
         'default_channel',
         'Default',
@@ -211,72 +228,52 @@ class _MyAppState extends State<MyApp> {
       );
     }
 
-    // ✅ Foreground handler
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
-      final internalUrl = message.data['url'];
-      final imageUrl = message.notification?.android?.imageUrl ?? message.data['image'];
-      final notification = message.notification;
-      final android = notification?.android;
+    if (notification != null && android != null) {
+      if (imageUrl != null && imageUrl.isNotEmpty) {
+        try {
+          final http.Response response = await http.get(Uri.parse(imageUrl));
+          final tempDir = await getTemporaryDirectory();
+          final filePath = '${tempDir.path}/notif_image.jpg';
+          final file = File(filePath);
+          await file.writeAsBytes(response.bodyBytes);
 
-      if (internalUrl != null && webViewController != null) {
-        webViewController?.loadUrl(urlRequest: URLRequest(url: WebUri(internalUrl)));
-      }
-
-      if (notification != null && android != null) {
-        AndroidNotificationDetails androidDetails;
-
-        if (imageUrl != null && imageUrl.isNotEmpty) {
-          try {
-            final http.Response response = await http.get(Uri.parse(imageUrl));
-            final tempDir = await getTemporaryDirectory();
-            final filePath = '${tempDir.path}/notif_image.jpg';
-            final file = File(filePath);
-            await file.writeAsBytes(response.bodyBytes);
-
-            androidDetails = AndroidNotificationDetails(
-              'default_channel',
-              'Default',
-              channelDescription: 'Default notification channel',
-              importance: Importance.max,
-              priority: Priority.high,
-              playSound: true,
-              icon: '@mipmap/ic_launcher',
-              styleInformation: BigPictureStyleInformation(
-                FilePathAndroidBitmap(filePath),
-                largeIcon: FilePathAndroidBitmap(filePath),
-                contentTitle: '<b>${notification.title}</b>',
-                summaryText: notification.body,
-                htmlFormatContentTitle: true,
-                htmlFormatSummaryText: true,
-              ),
-            );
-          } catch (e) {
-            if (kDebugMode) {
-              print('❌ Failed to load image: $e');
-            }
-            androidDetails = _defaultAndroidDetails(notification);
+          androidDetails = AndroidNotificationDetails(
+            'default_channel',
+            'Default',
+            channelDescription: 'Default notification channel',
+            importance: Importance.max,
+            priority: Priority.high,
+            playSound: true,
+            icon: '@mipmap/ic_launcher',
+            styleInformation: BigPictureStyleInformation(
+              FilePathAndroidBitmap(filePath),
+              largeIcon: FilePathAndroidBitmap(filePath),
+              contentTitle: '<b>${notification.title}</b>',
+              summaryText: notification.body,
+              htmlFormatContentTitle: true,
+              htmlFormatSummaryText: true,
+            ),
+          );
+        } catch (e) {
+          if (kDebugMode) {
+            print('❌ Failed to load image: $e');
           }
-        } else {
-          androidDetails = _defaultAndroidDetails(notification);
+          androidDetails = _defaultAndroidDetails();
         }
-
-        flutterLocalNotificationsPlugin.show(
-          notification.hashCode,
-          notification.title,
-          notification.body,
-          NotificationDetails(android: androidDetails),
-        );
+      } else {
+        androidDetails = _defaultAndroidDetails();
       }
-    });
 
-    // ✅ Background open handler
-    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      debugPrint("📲 Opened from background tap: ${message.data}");
-      _handleNotificationNavigation(message);
-    });
+      flutterLocalNotificationsPlugin.show(
+        notification.hashCode,
+        notification.title,
+        notification.body,
+        NotificationDetails(android: androidDetails),
+      );
+    }
   }
 
-  /// ✅ Check connectivity and update hasInternet
+  /// ✅ Connectivity
   Future<void> _checkInternetConnection() async {
     final result = await Connectivity().checkConnectivity();
     final isOnline = result != ConnectivityResult.none;
@@ -287,7 +284,7 @@ class _MyAppState extends State<MyApp> {
     }
   }
 
-  /// ✅ Back press exit confirmation
+  /// ✅ Back button double-press exit
   Future<bool> _onBackPressed() async {
     DateTime now = DateTime.now();
     if (_lastBackPressed == null || now.difference(_lastBackPressed!) > Duration(seconds: 2)) {
@@ -303,7 +300,6 @@ class _MyAppState extends State<MyApp> {
     }
     return true;
   }
-
 
   @override
   Widget build(BuildContext context) {
