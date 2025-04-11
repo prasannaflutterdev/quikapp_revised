@@ -50,38 +50,6 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
   debugPrint("🔔 Background message: ${message.messageId}");
 }
-
-
-// void main() async {
-//   const String webUrl = String.fromEnvironment('WEB_URL');
-//   WidgetsFlutterBinding.ensureInitialized();
-//
-//   const initSettingsAndroid = AndroidInitializationSettings('@mipmap/ic_launcher');
-//   const initSettings = InitializationSettings(android: initSettingsAndroid);
-//
-//   await flutterLocalNotificationsPlugin.initialize(
-//     initSettings,
-//     onDidReceiveNotificationResponse: (NotificationResponse response) {
-//       debugPrint("🔔 Notification tapped: ${response.payload}");
-//     },
-//   );
-//
-//   if (pushNotify) {
-//     await Firebase.initializeApp(options: await loadFirebaseOptionsFromJson());
-//
-//     FirebaseMessaging messaging = FirebaseMessaging.instance;
-//     await messaging.setAutoInitEnabled(true);
-//     await messaging.requestPermission();
-//
-//     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-//
-//     messaging.getToken().then((token) {
-//       debugPrint("✅ FCM Token: $token");
-//     });
-//   }
-//
-//   runApp(MyApp(webUrl: webUrl));
-// }
 void main() async {
   const String webUrl = String.fromEnvironment('WEB_URL');
   WidgetsFlutterBinding.ensureInitialized();
@@ -147,6 +115,76 @@ class _MyAppState extends State<MyApp> {
     iframeAllow: "camera; microphone",
     iframeAllowFullscreen: true,
   );
+
+  void requestPermissions() async {
+    if (isCameraEnabled) await Permission.camera.request();
+    if (isLocationEnabled) await Permission.location.request();
+    if (isMicEnabled) await Permission.microphone.request();
+    if (isNotificationEnabled) await Permission.notification.request();
+    if (isContactEnabled) await Permission.contacts.request();
+    if (isSMSEnabled) await Permission.sms.request();
+    if (isPhoneEnabled) await Permission.phone.request();
+    if (isBluetoothEnabled) await Permission.bluetooth.request();
+    await Permission.storage.request();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    requestPermissions();
+    if (pushNotify == true) {
+      // FirebaseMessaging.instance.getToken().then((token) {
+      //   debugPrint('✅ FCM Token: $token');
+      // });
+      setupFirebaseMessaging();
+    }
+
+    Connectivity().onConnectivityChanged.listen((_) {
+      _checkInternetConnection();
+    });
+
+    _checkInternetConnection();
+
+    pullToRefreshController = !kIsWeb &&
+        [TargetPlatform.android, TargetPlatform.iOS].contains(defaultTargetPlatform)
+        ? PullToRefreshController(
+      settings: PullToRefreshSettings(color: Colors.blue),
+      onRefresh: () async {
+        if (defaultTargetPlatform == TargetPlatform.android) {
+          webViewController?.reload();
+        } else if (defaultTargetPlatform == TargetPlatform.iOS) {
+          webViewController?.loadUrl(
+            urlRequest: URLRequest(url: await webViewController?.getUrl()),
+          );
+        }
+      },
+    )
+        : null;
+
+    // ✅ Handle terminated state push
+    FirebaseMessaging.instance.getInitialMessage().then((message) {
+      if (message != null) {
+        debugPrint("📲 Opened from terminated state: ${message.data}");
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _handleNotificationNavigation(message);
+        });
+      }
+    });
+  }
+
+  /// ✅ Extracts URL from notification and opens in WebView
+  void _handleNotificationNavigation(RemoteMessage message) {
+    final internalUrl = message.data['url'];
+    if (internalUrl != null && webViewController != null) {
+      webViewController?.loadUrl(
+        urlRequest: URLRequest(url: WebUri(internalUrl)),
+      );
+    } else {
+      debugPrint('🔗 No URL to navigate');
+    }
+  }
+
+  /// ✅ Setup push for foreground + background + topics
   void setupFirebaseMessaging() async {
     FirebaseMessaging messaging = FirebaseMessaging.instance;
 
@@ -154,13 +192,12 @@ class _MyAppState extends State<MyApp> {
       await messaging.requestPermission(alert: true, badge: true, sound: true);
     }
 
+    await messaging.subscribeToTopic('all_users');
     if (Platform.isAndroid) {
       await messaging.subscribeToTopic('android_users');
     } else if (Platform.isIOS) {
       await messaging.subscribeToTopic('ios_users');
     }
-
-    await messaging.subscribeToTopic('all_users');
 
     AndroidNotificationDetails _defaultAndroidDetails(RemoteNotification notification) {
       return AndroidNotificationDetails(
@@ -174,6 +211,7 @@ class _MyAppState extends State<MyApp> {
       );
     }
 
+    // ✅ Foreground handler
     FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
       final internalUrl = message.data['url'];
       final imageUrl = message.notification?.android?.imageUrl ?? message.data['image'];
@@ -213,7 +251,9 @@ class _MyAppState extends State<MyApp> {
               ),
             );
           } catch (e) {
-            print('❌ Failed to load image: $e');
+            if (kDebugMode) {
+              print('❌ Failed to load image: $e');
+            }
             androidDetails = _defaultAndroidDetails(notification);
           }
         } else {
@@ -229,58 +269,14 @@ class _MyAppState extends State<MyApp> {
       }
     });
 
+    // ✅ Background open handler
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      Fluttertoast.showToast(
-          msg: "📲 Opened from Notification: ${message.notification?.title}");
+      debugPrint("📲 Opened from background tap: ${message.data}");
+      _handleNotificationNavigation(message);
     });
   }
 
-  void requestPermissions() async {
-    if (isCameraEnabled) await Permission.camera.request();
-    if (isLocationEnabled) await Permission.location.request();
-    if (isMicEnabled) await Permission.microphone.request();
-    if (isNotificationEnabled) await Permission.notification.request();
-    if (isContactEnabled) await Permission.contacts.request();
-    if (isSMSEnabled) await Permission.sms.request();
-    if (isPhoneEnabled) await Permission.phone.request();
-    if (isBluetoothEnabled) await Permission.bluetooth.request();
-    await Permission.storage.request();
-  }
-
-  @override
-  void initState() {
-    super.initState();
-
-    if (pushNotify == true) {
-      FirebaseMessaging.instance.getToken().then((token) {
-        debugPrint('✅ FCM Token: $token');
-      });
-      setupFirebaseMessaging();
-    }
-
-    Connectivity().onConnectivityChanged.listen((_) {
-      _checkInternetConnection();
-    });
-
-    _checkInternetConnection();
-
-    pullToRefreshController = !kIsWeb &&
-        [TargetPlatform.android, TargetPlatform.iOS].contains(defaultTargetPlatform)
-        ? PullToRefreshController(
-      settings: PullToRefreshSettings(color: Colors.blue),
-      onRefresh: () async {
-        if (defaultTargetPlatform == TargetPlatform.android) {
-          webViewController?.reload();
-        } else if (defaultTargetPlatform == TargetPlatform.iOS) {
-          webViewController?.loadUrl(
-            urlRequest: URLRequest(url: await webViewController?.getUrl()),
-          );
-        }
-      },
-    )
-        : null;
-  }
-
+  /// ✅ Check connectivity and update hasInternet
   Future<void> _checkInternetConnection() async {
     final result = await Connectivity().checkConnectivity();
     final isOnline = result != ConnectivityResult.none;
@@ -291,6 +287,7 @@ class _MyAppState extends State<MyApp> {
     }
   }
 
+  /// ✅ Back press exit confirmation
   Future<bool> _onBackPressed() async {
     DateTime now = DateTime.now();
     if (_lastBackPressed == null || now.difference(_lastBackPressed!) > Duration(seconds: 2)) {
