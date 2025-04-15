@@ -391,8 +391,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   // Environment-defined values
   final String splashUrl = const String.fromEnvironment('SPLASH');
   final String splashBgUrl = const String.fromEnvironment('SPLASH_BG');
-  final String splashTagline = const String.fromEnvironment('SPLASH_TAGLINE');
-  final int splashDuration = const int.fromEnvironment('SPLASH_DURATION', defaultValue: 3);
+  // final String splashTagline = const String.fromEnvironment('SPLASH_TAGLINE');
+  // final int splashDuration = const int.fromEnvironment('SPLASH_DURATION', defaultValue: 3);
   final Color backgroundColor = _parseHexColor(const String.fromEnvironment('SPLASH_BG_COLOR', defaultValue: "#ffffff"));
   final Color taglineColor = _parseHexColor(const String.fromEnvironment('SPLASH_TAGLINE_COLOR', defaultValue: "#000000"));
 
@@ -427,44 +427,36 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: backgroundColor,
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Background image if available
-            splashUrl.isNotEmpty
-                ?Positioned.fill(
-              child: Image.asset('assets/images/splash_bg.png', fit: BoxFit.cover),
-            ):Positioned.fill(child: SizedBox.square(),),
-            // Centered logo
-            Center(
-              child: ScaleTransition(
-                scale: _animation,
-                child: Image.asset('assets/images/splash.png', height: 120),
+      body: Stack(
+        children: [
+          splashUrl.isNotEmpty
+              ? Image.asset('assets/images/splash_bg.png', fit: BoxFit.cover)
+              : const SizedBox.shrink(),
+          Center(
+            child: ScaleTransition(
+              scale: _animation,
+              child: Image.asset(
+                'assets/images/splash.png',
+                width: 150,
+                fit: BoxFit.fitWidth,
               ),
             ),
-            // ScaleTransition(
-            //   scale: _animation,
-            //   child: splashUrl.isNotEmpty
-            //       ? Image.asset('assets/images/splash.png', height: 120)
-            //       : const FlutterLogo(size: 120),
-            // ),
-            const SizedBox(height: 20),
-    Positioned(
-    bottom: 60,
-    left: 0,
-    right: 0,
-    child:Text(
-              splashTagline.isNotEmpty?splashTagline:"",
+          ),
+          Positioned(
+            bottom: 60,
+            left: 0,
+            right: 0,
+            child: Text(
+              splashTagline.isNotEmpty ? splashTagline : "",
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w500,
                 color: taglineColor,
               ),
               textAlign: TextAlign.center,
-            ),),
-          ],
-        ),
+            ),
+          ),
+        ],
       ),
     );
   }
