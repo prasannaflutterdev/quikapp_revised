@@ -79,9 +79,9 @@ void main() async {
     );
 
     FirebaseMessaging messaging = FirebaseMessaging.instance;
-    messaging.getToken().then((token) {
-      debugPrint("✅ FCM Token: $token");
-    });
+    // messaging.getToken().then((token) {
+    //   debugPrint("✅ FCM Token: $token");
+    // });
 
     await messaging.setAutoInitEnabled(true);
     await messaging.requestPermission();
@@ -93,25 +93,36 @@ void main() async {
 
   runApp(MyApp(webUrl: webUrl));
 }
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   final String webUrl;
   const MyApp({super.key, required this.webUrl});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  bool showSplash = isSplashEnabled;
+
+  @override
+  void initState() {
+    super.initState();
+    if (showSplash) {
+      Future.delayed(Duration(seconds: splashDuration), () {
+        setState(() {
+          showSplash = false;
+        });
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: isSplashEnabled
-          ? SplashScreen(
-        onDone: () {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(
-              builder: (context) => MainHome(webUrl: webUrl),
-            ),
-          );
-        },
-      )
-          : MainHome(webUrl: webUrl),
+      home: showSplash
+          ? SplashScreen()
+          : MainHome(webUrl: widget.webUrl),
     );
   }
 }
@@ -376,8 +387,7 @@ class _MainHomeState extends State<MainHome> {
 
 
 class SplashScreen extends StatefulWidget {
-  final VoidCallback onDone;
-  const SplashScreen({super.key, required this.onDone});
+  const SplashScreen({super.key});
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
@@ -387,39 +397,29 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   late final AnimationController _controller;
   late final Animation<double> _animation;
 
-  // Environment-defined values
   final String splashUrl = const String.fromEnvironment('SPLASH');
-  final String splashBgUrl = const String.fromEnvironment('SPLASH_BG');
-  // final String splashTagline = const String.fromEnvironment('SPLASH_TAGLINE');
-  // final int splashDuration = const int.fromEnvironment('SPLASH_DURATION', defaultValue: 3);
+  final String splashTagline = const String.fromEnvironment('SPLASH_TAGLINE');
   final Color backgroundColor = _parseHexColor(const String.fromEnvironment('SPLASH_BG_COLOR', defaultValue: "#ffffff"));
   final Color taglineColor = _parseHexColor(const String.fromEnvironment('SPLASH_TAGLINE_COLOR', defaultValue: "#000000"));
 
+  static Color _parseHexColor(String hexColor) {
+    hexColor = hexColor.replaceFirst('#', '');
+    if (hexColor.length == 6) hexColor = 'FF$hexColor';
+    return Color(int.parse('0x$hexColor'));
+  }
+
   @override
   void initState() {
-    debugPrint('📦 Splash image loaded from: $splashUrl');
     super.initState();
-
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 800),
-    )..forward();
-
+    debugPrint('📦 Splash image loaded from: $splashUrl');
+    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 800))..forward();
     _animation = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
-
-    Future.delayed(Duration(seconds: splashDuration), widget.onDone);
   }
 
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
-  }
-
-  static Color _parseHexColor(String hexColor) {
-    hexColor = hexColor.replaceFirst('#', '');
-    if (hexColor.length == 6) hexColor = 'FF$hexColor'; // Add opacity if missing
-    return Color(int.parse('0x$hexColor'));
   }
 
   @override
@@ -434,11 +434,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
           Center(
             child: ScaleTransition(
               scale: _animation,
-              child: Image.asset(
-                'assets/images/splash.png',
-                width: 150,
-                fit: BoxFit.fitWidth,
-              ),
+              child: Image.asset('assets/images/splash.png', width: 150, fit: BoxFit.fitWidth),
             ),
           ),
           if (splashTagline.isNotEmpty)
