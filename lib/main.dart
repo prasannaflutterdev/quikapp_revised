@@ -462,7 +462,12 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       body: Stack(
         children: [
           splashUrl.isNotEmpty
-              ? Image.asset('assets/images/splash_bg.png', fit: BoxFit.fitHeight)
+              ? Positioned.fill(
+            child: Image.asset(
+              'assets/images/splash_bg.png',
+              fit: BoxFit.cover,
+            ),
+          )
               : const SizedBox.shrink(),
           Center(child: _buildAnimatedLogo()),
           if (splashTagline.isNotEmpty)
