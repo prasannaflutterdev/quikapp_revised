@@ -371,7 +371,11 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   late final AnimationController _controller;
   late final Animation<double> _animation;
 
+  // Environment-defined values
   final String splashUrl = const String.fromEnvironment('SPLASH');
+  final String splashTagline = const String.fromEnvironment('SPLASH_TAGLINE');
+  final int splashDuration = const int.fromEnvironment('SPLASH_DURATION', defaultValue: 3);
+  final Color backgroundColor = _parseHexColor(const String.fromEnvironment('SPLASH_BG_COLOR', defaultValue: "#ffffff"));
   final Color taglineColor = _parseHexColor(const String.fromEnvironment('SPLASH_TAGLINE_COLOR', defaultValue: "#000000"));
 
   @override
@@ -403,6 +407,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: backgroundColor,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
