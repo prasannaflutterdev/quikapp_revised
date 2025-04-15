@@ -87,6 +87,19 @@ definitions:
 #      script: |
 #        flutter pub run flutter_native_splash:create
 #        flutter pub get
+    - &get_splash
+      name: Get splash screen image from splash image from Url
+      script: |
+        echo "🚀 Started: Downloading SPLASH from $SPLASH"
+        mkdir -p assets/images/
+        wget -O assets/images/splash.png $SPLASH
+        if [ $? -ne 0 ]; then
+              echo "❌ Error: Failed to download SPLASH"
+              exit 1
+            fi
+            flutter pub get
+            echo "✅ Completed: SPLASH downloaded"
+
     - &generate_splash_config
       name: Generate splash screen config
       script: |
@@ -109,21 +122,7 @@ definitions:
           echo "Skipping splash screen config generation (IS_SPLASH != true)"
         fi
 
-#    - &generate_splash_config
-#      name: Generate splash screen config
-#      script: |
-#        cat > flutter_native_splash.yaml <<EOF
-#        flutter_native_splash:
-#          color: "$SPLASH_BG_COLOR"
-#          image: assets/images/splash.png
-#          android: true
-#          ios: true
-#          web: false
-#          fullscreen: true
-#          android_12:
-#            image: assets/images/splash.png
-#            icon_background_color: "$SPLASH_BG_COLOR"
-#        EOF
+
     - &set_splash_icons
       name: Apply splash screen
       script: |
@@ -134,7 +133,21 @@ definitions:
           else
             echo "Skipping splash screen setup (IS_SPLASH != true)"
           fi
-
+    #    - &generate_splash_config
+    #      name: Generate splash screen config
+    #      script: |
+    #        cat > flutter_native_splash.yaml <<EOF
+    #        flutter_native_splash:
+    #          color: "$SPLASH_BG_COLOR"
+    #          image: assets/images/splash.png
+    #          android: true
+    #          ios: true
+    #          web: false
+    #          fullscreen: true
+    #          android_12:
+    #            image: assets/images/splash.png
+    #            icon_background_color: "$SPLASH_BG_COLOR"
+    #        EOF
     - &Inject_Firebase
       name: Inject Firebase and buildscript block
       script: |
@@ -341,18 +354,7 @@ definitions:
 #        wget -O assets/images/logo.png $LOGO_URL
 #        flutter pub get
 
-    - &get_splash
-      name: Get splash screen image from splash image from Url
-      script: |
-        echo "🚀 Started: Downloading SPLASH from $SPLASH"
-        mkdir -p assets/images/
-        wget -O assets/images/splash.png $SPLASH
-        if [ $? -ne 0 ]; then
-              echo "❌ Error: Failed to download SPLASH"
-              exit 1
-            fi
-            flutter pub get
-            echo "✅ Completed: SPLASH downloaded"
+
 
     - &set_launcher_icons
       name: Generate Launcher Icons

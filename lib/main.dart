@@ -93,16 +93,38 @@ void main() async {
 
   runApp(MyApp(webUrl: webUrl));
 }
-
-class MyApp extends StatefulWidget {
+class MyApp extends StatelessWidget {
   final String webUrl;
   const MyApp({super.key, required this.webUrl});
 
   @override
-  State<MyApp> createState() => _MyAppState();
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: isSplashEnabled
+          ? SplashScreen(
+        onDone: () {
+          // Navigate to MainHome after splash
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (context) => MainHome(webUrl: webUrl),
+            ),
+          );
+        },
+      )
+          : MainHome(webUrl: webUrl),
+    );
+  }
+}
+class MainHome extends StatefulWidget {
+  final String webUrl;
+  const MainHome({super.key, required this.webUrl});
+
+  @override
+  State<MainHome> createState() => _MainHomeState();
 }
 
-class _MyAppState extends State<MyApp> {
+class _MainHomeState extends State<MainHome> {
   final GlobalKey webViewKey = GlobalKey();
   InAppWebViewController? webViewController;
   late PullToRefreshController? pullToRefreshController;
@@ -306,41 +328,7 @@ class _MyAppState extends State<MyApp> {
     }
     return true;
   }
-  Widget _buildMainWebView() {
-    return Scaffold(
-      body: SafeArea(
-        child: Builder(
-          builder: (context) {
-            if (hasInternet == null) return const Center(child: CircularProgressIndicator());
-            if (hasInternet == false) return const Center(child: Text('📴 No Internet Connection'));
-            return InAppWebView(
-              key: webViewKey,
-              webViewEnvironment: webViewEnvironment,
-              initialUrlRequest: URLRequest(url: WebUri(widget.webUrl)),
-              pullToRefreshController: pullToRefreshController,
-              onWebViewCreated: (controller) {
-                webViewController = controller;
-                if (_pendingInitialUrl != null) {
-                  webViewController?.loadUrl(urlRequest: URLRequest(url: WebUri(_pendingInitialUrl!)));
-                  _pendingInitialUrl = null;
-                }
-              },
-              shouldOverrideUrlLoading: (controller, navigationAction) async {
-                final uri = navigationAction.request.url;
-                if (uri != null && !uri.toString().contains(widget.webUrl)) {
-                  if (await canLaunchUrl(uri)) {
-                    await launchUrl(uri, mode: LaunchMode.externalApplication);
-                    return NavigationActionPolicy.CANCEL;
-                  }
-                }
-                return NavigationActionPolicy.ALLOW;
-              },
-            );
-          },
-        ),
-      ),
-    );
-  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -348,16 +336,45 @@ class _MyAppState extends State<MyApp> {
       debugShowCheckedModeBanner: false,
       home: WillPopScope(
         onWillPop: _onBackPressed,
-        child: isSplashEnabled
-            ? SplashScreen(onDone: () {
-          setState(() {}); // rebuild after splash
-        })
-            : _buildMainWebView(),
+        child: Scaffold(
+          body: SafeArea(
+            child: Builder(
+              builder: (context) {
+                if (hasInternet == null) return const Center(child: CircularProgressIndicator());
+                if (hasInternet == false) return const Center(child: Text('📴 No Internet Connection'));
+                return InAppWebView(
+                  key: webViewKey,
+                  webViewEnvironment: webViewEnvironment,
+                  initialUrlRequest: URLRequest(url: WebUri(widget.webUrl)),
+                  pullToRefreshController: pullToRefreshController,
+                  onWebViewCreated: (controller) {
+                    webViewController = controller;
+                    if (_pendingInitialUrl != null) {
+                      webViewController?.loadUrl(urlRequest: URLRequest(url: WebUri(_pendingInitialUrl!)));
+                      _pendingInitialUrl = null;
+                    }
+                  },
+                  shouldOverrideUrlLoading: (controller, navigationAction) async {
+                    final uri = navigationAction.request.url;
+                    if (uri != null && !uri.toString().contains(widget.webUrl)) {
+                      if (await canLaunchUrl(uri)) {
+                        await launchUrl(uri, mode: LaunchMode.externalApplication);
+                        return NavigationActionPolicy.CANCEL;
+                      }
+                    }
+                    return NavigationActionPolicy.ALLOW;
+                  },
+                );
+              },
+            ),
+          ),
+        ),
       ),
     );
 
   }
 }
+
 
 class SplashScreen extends StatefulWidget {
   final VoidCallback onDone;
@@ -412,10 +429,11 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            ClipRect(),
             ScaleTransition(
               scale: _animation,
               child: splashUrl.isNotEmpty
-                  ? Image.network(splashUrl, height: 120)
+                  ? Image.asset('assets/images/splash.png', height: 120)
                   : const FlutterLogo(size: 120),
             ),
             const SizedBox(height: 20),
@@ -435,6 +453,59 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   }
 }
 
+// Widget _buildMainWebView() {
+//   return Scaffold(
+//     body: SafeArea(
+//       child: Builder(
+//         builder: (context) {
+//           if (hasInternet == null) return const Center(child: CircularProgressIndicator());
+//           if (hasInternet == false) return const Center(child: Text('📴 No Internet Connection'));
+//           return InAppWebView(
+//             key: webViewKey,
+//             webViewEnvironment: webViewEnvironment,
+//             initialUrlRequest: URLRequest(url: WebUri(widget.webUrl)),
+//             pullToRefreshController: pullToRefreshController,
+//             onWebViewCreated: (controller) {
+//               webViewController = controller;
+//               if (_pendingInitialUrl != null) {
+//                 webViewController?.loadUrl(urlRequest: URLRequest(url: WebUri(_pendingInitialUrl!)));
+//                 _pendingInitialUrl = null;
+//               }
+//             },
+//             shouldOverrideUrlLoading: (controller, navigationAction) async {
+//               final uri = navigationAction.request.url;
+//               if (uri != null && !uri.toString().contains(widget.webUrl)) {
+//                 if (await canLaunchUrl(uri)) {
+//                   await launchUrl(uri, mode: LaunchMode.externalApplication);
+//                   return NavigationActionPolicy.CANCEL;
+//                 }
+//               }
+//               return NavigationActionPolicy.ALLOW;
+//             },
+//           );
+//         },
+//       ),
+//     ),
+//   );
+// }
+// class main_home extends StatelessWidget {
+//   const main_home({super.key});
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     return MaterialApp(
+//       debugShowCheckedModeBanner: false,
+//       home: WillPopScope(
+//         onWillPop: _onBackPressed,
+//         child: isSplashEnabled
+//             ? SplashScreen(onDone: () {
+//           setState(() {}); // rebuild after splash
+//         })
+//             : _buildMainWebView(),
+//       ),
+//     );
+//   }
+// }
 // class SplashScreen extends StatelessWidget {
 //   final VoidCallback onDone;
 //   const SplashScreen({super.key, required this.onDone});
