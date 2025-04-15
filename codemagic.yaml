@@ -492,7 +492,7 @@ workflows:
       - *get_logo
       - *set_launcher_icons
       - *get_splash
-      - *set_splash_icons
+#      - *set_splash_icons
       - *change_app_name
       - *Inject_Firebase
       # - *build_release_apk
