@@ -104,7 +104,6 @@ class MyApp extends StatelessWidget {
       home: isSplashEnabled
           ? SplashScreen(
         onDone: () {
-          // Navigate to MainHome after splash
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(
               builder: (context) => MainHome(webUrl: webUrl),
@@ -442,20 +441,21 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
               ),
             ),
           ),
-          Positioned(
-            bottom: 60,
-            left: 0,
-            right: 0,
-            child: Text(
-              splashTagline.isNotEmpty ? splashTagline : "",
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w500,
-                color: taglineColor,
+          if (splashTagline.isNotEmpty)
+            Positioned(
+              bottom: 60,
+              left: 0,
+              right: 0,
+              child: Text(
+                splashTagline,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w500,
+                  color: taglineColor,
+                ),
+                textAlign: TextAlign.center,
               ),
-              textAlign: TextAlign.center,
             ),
-          ),
         ],
       ),
     );

@@ -92,62 +92,64 @@ definitions:
     - &get_splash
       name: Get splash screen image from splash image from Url
       script: |
-        echo "🚀 Started: Downloading splash assets"
-  
-            mkdir -p assets/images/
-            
-            # Download splash logo
-            wget -O assets/images/splash.png "$SPLASH"
-            if [ $? -ne 0 ]; then
-          echo "❌ Error: Failed to download SPLASH logo"
-            exit 1
-            fi
-            
-            # Download splash background (optional)
-            if [ -n "$SPLASH_BG" ]; then
-            wget -O assets/images/splash_bg.png "$SPLASH_BG"
-            if [ $? -ne 0 ]; then
-          echo "❌ Error: Failed to download SPLASH background"
-            exit 1
-            fi
-            fi
-            
-            flutter pub get
-          echo "✅ Completed: Splash assets downloaded"
-
-    - &generate_splash_config
-      name: Generate splash screen config
-      script: |
         if [ "$IS_SPLASH" = "true" ]; then
-            SPLASH_BG_COLOR=${SPLASH_BG_COLOR:-"#ffffff"}
-            echo "Generating flutter_native_splash.yaml with SPLASH_BG_COLOR=$SPLASH_BG_COLOR"
-            cat > flutter_native_splash.yaml <<EOF
-        flutter_native_splash:
-          color: "$SPLASH_BG_COLOR"
-          image: assets/images/splash.png
-          android: true
-          ios: true
-          web: false
-          fullscreen: true
-          android_12:
-            image: assets/images/splash.png
-            icon_background_color: "$SPLASH_BG_COLOR"
-        EOF
+        echo "🚀 Started: Downloading splash assets"
+      
+        mkdir -p assets/images/
+      
+        # Download splash logo
+        echo "⬇️ Downloading splash logo from: $SPLASH"
+        wget -O assets/images/splash.png "$SPLASH"
+        if [ $? -ne 0 ]; then
+        echo "❌ Error: Failed to download SPLASH logo"
+        exit 1
+        fi
+      
+        # Download splash background (optional)
+        if [ -n "$SPLASH_BG" ]; then
+        echo "⬇️ Downloading splash background from: $SPLASH_BG"
+        wget -O assets/images/splash_bg.png "$SPLASH_BG"
+        if [ $? -ne 0 ]; then
+        echo "❌ Error: Failed to download SPLASH background"
+        exit 1
+        fi
         else
-          echo "Skipping splash screen config generation (IS_SPLASH != true)"
+        echo "ℹ️ No SPLASH_BG provided, skipping background download"
         fi
 
+#    - &generate_splash_config
+#      name: Generate splash screen config
+#      script: |
+#        if [ "$IS_SPLASH" = "true" ]; then
+#            SPLASH_BG_COLOR=${SPLASH_BG_COLOR:-"#ffffff"}
+#            echo "Generating flutter_native_splash.yaml with SPLASH_BG_COLOR=$SPLASH_BG_COLOR"
+#            cat > flutter_native_splash.yaml <<EOF
+#        flutter_native_splash:
+#          color: "$SPLASH_BG_COLOR"
+#          image: assets/images/splash.png
+#          android: true
+#          ios: true
+#          web: false
+#          fullscreen: true
+#          android_12:
+#            image: assets/images/splash.png
+#            icon_background_color: "$SPLASH_BG_COLOR"
+#        EOF
+#        else
+#          echo "Skipping splash screen config generation (IS_SPLASH != true)"
+#        fi
 
-    - &set_splash_icons
-      name: Apply splash screen
-      script: |
-          if [ "$IS_SPLASH" = "true" ]; then
-            echo "Applying splash screen with flutter_native_splash"
-            flutter pub get
-            flutter pub run flutter_native_splash:create
-          else
-            echo "Skipping splash screen setup (IS_SPLASH != true)"
-          fi
+
+#    - &set_splash_icons
+#      name: Apply splash screen
+#      script: |
+#          if [ "$IS_SPLASH" = "true" ]; then
+#            echo "Applying splash screen with flutter_native_splash"
+#            flutter pub get
+#            flutter pub run flutter_native_splash:create
+#          else
+#            echo "Skipping splash screen setup (IS_SPLASH != true)"
+#          fi
     #    - &generate_splash_config
     #      name: Generate splash screen config
     #      script: |
@@ -460,8 +462,8 @@ workflows:
       - *get_logo
       - *set_launcher_icons
       - *get_splash
-      - *generate_splash_config
-      - *set_splash_icons
+#      - *generate_splash_config
+#      - *set_splash_icons
       - *change_app_name
       - *Inject_Firebase
       - *get_json
