@@ -265,10 +265,10 @@ definitions:
             flutter build apk --release \
               --dart-define=WEB_URL="$WEB_URL" \
               --dart-define=PUSH_NOTIFY="$PUSH_NOTIFY" \
-              --dart-define=IS_SPLASH=$IS_SPLASH \
-              --dart-define=SPLASH_TAGLINE=$SPLASH_TAGLINE \
-              --dart-define=SPLASH_ANIMATION=$SPLASH_ANIMATION \
-              --dart-define=SPLASH_DURATION=$SPLASH_DURATION \
+              --dart-define=IS_SPLASH="$IS_SPLASH" \
+              --dart-define=SPLASH_TAGLINE="$SPLASH_TAGLINE" \
+              --dart-define=SPLASH_ANIMATION="$SPLASH_ANIMATION" \
+              --dart-define=SPLASH_DURATION="$SPLASH_DURATION" \
               --dart-define=IS_CAMERA="$IS_CAMERA" \
               --dart-define=IS_LOCATION="$IS_LOCATION" \
               --dart-define=IS_MIC="$IS_MIC" \
