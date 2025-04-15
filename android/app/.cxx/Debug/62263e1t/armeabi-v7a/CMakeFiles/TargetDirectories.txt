@@ -1,0 +1,2 @@
+D:/Apps/quikapp_revised/android/app/.cxx/Debug/62263e1t/armeabi-v7a/CMakeFiles/edit_cache.dir
+D:/Apps/quikapp_revised/android/app/.cxx/Debug/62263e1t/armeabi-v7a/CMakeFiles/rebuild_cache.dir

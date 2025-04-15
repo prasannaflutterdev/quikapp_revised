@@ -348,33 +348,79 @@ class _MyAppState extends State<MyApp> {
       debugShowCheckedModeBanner: false,
       home: WillPopScope(
         onWillPop: _onBackPressed,
-        child: isSplashEnabled ? SplashScreen(onDone: () => setState(() {})) : _buildMainWebView(),
+        child: isSplashEnabled
+            ? SplashScreen(onDone: () {
+          setState(() {}); // rebuild after splash
+        })
+            : _buildMainWebView(),
       ),
     );
 
   }
 }
 
-class SplashScreen extends StatelessWidget {
+class SplashScreen extends StatefulWidget {
   final VoidCallback onDone;
   const SplashScreen({super.key, required this.onDone});
 
   @override
+  State<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _animation;
+
+  final String splashUrl = const String.fromEnvironment('SPLASH');
+  final Color taglineColor = _parseHexColor(const String.fromEnvironment('SPLASH_TAGLINE_COLOR', defaultValue: "#000000"));
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    )..forward();
+
+    _animation = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
+
+    Future.delayed(Duration(seconds: splashDuration), widget.onDone);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  static Color _parseHexColor(String hexColor) {
+    hexColor = hexColor.replaceFirst('#', '');
+    if (hexColor.length == 6) hexColor = 'FF$hexColor'; // Add opacity if missing
+    return Color(int.parse('0x$hexColor'));
+  }
+
+  @override
   Widget build(BuildContext context) {
-    Future.delayed(Duration(seconds: splashDuration), onDone);
     return Scaffold(
-      // backgroundColor: Colors.white,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            splashAnimation.isNotEmpty
-                ? Image.asset(splashAnimation, height: 120)
-                : const FlutterLogo(size: 120),
+            ScaleTransition(
+              scale: _animation,
+              child: splashUrl.isNotEmpty
+                  ? Image.network(splashUrl, height: 120)
+                  : const FlutterLogo(size: 120),
+            ),
             const SizedBox(height: 20),
             Text(
               splashTagline,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w500,
+                color: taglineColor,
+              ),
               textAlign: TextAlign.center,
             ),
           ],
@@ -383,6 +429,36 @@ class SplashScreen extends StatelessWidget {
     );
   }
 }
+
+// class SplashScreen extends StatelessWidget {
+//   final VoidCallback onDone;
+//   const SplashScreen({super.key, required this.onDone});
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     Future.delayed(Duration(seconds: splashDuration), onDone);
+//     return Scaffold(
+//       // backgroundColor: Colors.white,
+//       body: Center(
+//         child: Column(
+//           mainAxisAlignment: MainAxisAlignment.center,
+//           children: [
+//
+//             splashAnimation.isNotEmpty
+//                 ? Image.asset(splashAnimation, height: 120)
+//                 : const FlutterLogo(size: 120),
+//             const SizedBox(height: 20),
+//             Text(
+//               splashTagline,
+//               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+//               textAlign: TextAlign.center,
+//             ),
+//           ],
+//         ),
+//       ),
+//     );
+//   }
+// }
 // @override
 // Widget build(BuildContext context) {
 //   return MaterialApp(

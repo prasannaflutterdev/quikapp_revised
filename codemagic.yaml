@@ -62,6 +62,7 @@ definitions:
         echo "APP_NAME: $APP_NAME"
         echo "ORG_NAME: $ORG_NAME"
         echo "WEB_URL: $WEB_URL"
+        echo "IS_SPLASH: $IS_SPLASH"
         echo "SPLASH: $SPLASH"
         echo "SPLASH_BG_COLOR: $SPLASH_BG_COLOR"
         echo "SPLASH_TAGLINE: $SPLASH_TAGLINE"
@@ -260,14 +261,14 @@ definitions:
           echo "✅ Start Building APK...."
           flutter clean
           flutter pub get
-          
-          if [ "$PUSH_NOTIFY" = "true" ]; then
-            flutter build apk --release \
+          flutter build apk --release \
               --dart-define=WEB_URL="$WEB_URL" \
               --dart-define=PUSH_NOTIFY="$PUSH_NOTIFY" \
               --dart-define=IS_SPLASH="$IS_SPLASH" \
+              --dart-define=SPLASH="$SPLASH" \
+              --dart-define=SPLASH_BG_COLOR="$SPLASH_BG_COLOR" \
               --dart-define=SPLASH_TAGLINE="$SPLASH_TAGLINE" \
-              --dart-define=SPLASH_ANIMATION="$SPLASH_ANIMATION" \
+              --dart-define=SPLASH_TAGLINE_COLOR="$SPLASH_TAGLINE_COLOR" \
               --dart-define=SPLASH_DURATION="$SPLASH_DURATION" \
               --dart-define=IS_CAMERA="$IS_CAMERA" \
               --dart-define=IS_LOCATION="$IS_LOCATION" \
@@ -278,20 +279,9 @@ definitions:
               --dart-define=IS_PHONE="$IS_PHONE" \
               --dart-define=IS_BLUETOOTH="$IS_BLUETOOTH" > flutter_build.log
               echo "✅ Build APK Compleated...."
-          else
-            flutter build apk --release \
-              --dart-define=WEB_URL="$WEB_URL" \
-              --dart-define=PUSH_NOTIFY="$PUSH_NOTIFY" \
-              --dart-define=IS_CAMERA="$IS_CAMERA" \
-              --dart-define=IS_LOCATION="$IS_LOCATION" \
-              --dart-define=IS_MIC="$IS_MIC" \
-              --dart-define=IS_NOTIFICATION="$IS_NOTIFICATION" \
-              --dart-define=IS_CONTACT="$IS_CONTACT" \
-              --dart-define=IS_SMS="$IS_SMS" \
-              --dart-define=IS_PHONE="$IS_PHONE" \
-              --dart-define=IS_BLUETOOTH="$IS_BLUETOOTH" > flutter_build.log
-              echo "✅ Build APK Compleated...."
-          fi
+         
+              
+
     # - &build_app
     #   name: Building App
     #   script: |
