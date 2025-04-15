@@ -89,23 +89,50 @@ definitions:
     - &generate_splash_config
       name: Generate splash screen config
       script: |
-        cat > flutter_native_splash.yaml <<EOF
+          if [ "$IS_SPLASH" = "true" ]; then
+            SPLASH_BG_COLOR=${SPLASH_BG_COLOR:-"#ffffff"}
+            echo "Generating flutter_native_splash.yaml with SPLASH_BG_COLOR=$SPLASH_BG_COLOR"
+            cat > flutter_native_splash.yaml <<EOF
         flutter_native_splash:
-          color: "$SPLASH_BG_COLOR"
+        color: "$SPLASH_BG_COLOR"
+        image: assets/images/splash.png
+        android: true
+        ios: true
+        web: false
+        fullscreen: true
+        android_12:
           image: assets/images/splash.png
-          android: true
-          ios: true
-          web: false
-          fullscreen: true
-          android_12:
-            image: assets/images/splash.png
-            icon_background_color: "$SPLASH_BG_COLOR"
+          icon_background_color: "$SPLASH_BG_COLOR"
         EOF
+        else
+        echo "Skipping splash screen config generation (IS_SPLASH != true)"
+        fi
+
+#    - &generate_splash_config
+#      name: Generate splash screen config
+#      script: |
+#        cat > flutter_native_splash.yaml <<EOF
+#        flutter_native_splash:
+#          color: "$SPLASH_BG_COLOR"
+#          image: assets/images/splash.png
+#          android: true
+#          ios: true
+#          web: false
+#          fullscreen: true
+#          android_12:
+#            image: assets/images/splash.png
+#            icon_background_color: "$SPLASH_BG_COLOR"
+#        EOF
     - &set_splash_icons
       name: Apply splash screen
       script: |
-        flutter pub run flutter_native_splash:create
-        flutter pub get
+          if [ "$IS_SPLASH" = "true" ]; then
+            echo "Applying splash screen with flutter_native_splash"
+            flutter pub get
+            flutter pub run flutter_native_splash:create
+          else
+            echo "Skipping splash screen setup (IS_SPLASH != true)"
+          fi
 
     - &Inject_Firebase
       name: Inject Firebase and buildscript block
@@ -148,36 +175,36 @@ definitions:
           echo "🚫 Firebase config skipped (PUSH_NOTIFY is not true)"
         fi
 
-    - &read_json
-          name: Read JSON file
-          script: |
-            if [ "$PUSH_NOTIFY" = "true" ]; then
-              echo "📖 Reading google-services.json..."
-              apt-get update && apt-get install -y jq
-
-              if [ ! -f android/app/google-services.json ]; then
-                echo "❌ google-services.json missing!"
-                exit 1
-              fi
-
-              cat android/app/google-services.json
-
-              export API_KEY=$(jq -r '.client[0].api_key[0].current_key' android/app/google-services.json)
-              export APP_ID=$(jq -r '.client[0].client_info.mobilesdk_app_id' android/app/google-services.json)
-              export PROJECT_ID=$(jq -r '.project_info.project_id' android/app/google-services.json)
-              export MESSAGING_SENDER_ID=$(jq -r '.project_info.project_number' android/app/google-services.json)
-              export STORAGE_BUCKET=$(jq -r '.project_info.storage_bucket' android/app/google-services.json)
-
-              echo "export API_KEY=$API_KEY" >> $CM_ENV
-              echo "export APP_ID=$APP_ID" >> $CM_ENV
-              echo "export PROJECT_ID=$PROJECT_ID" >> $CM_ENV
-              echo "export MESSAGING_SENDER_ID=$MESSAGING_SENDER_ID" >> $CM_ENV
-              echo "export STORAGE_BUCKET=$STORAGE_BUCKET" >> $CM_ENV
-
-              echo "✅ Firebase config exported"
-            else
-              echo "🚫 Firebase config skipped (PUSH_NOTIFY is not true)"
-            fi
+#    - &read_json
+#          name: Read JSON file
+#          script: |
+#            if [ "$PUSH_NOTIFY" = "true" ]; then
+#              echo "📖 Reading google-services.json..."
+#              apt-get update && apt-get install -y jq
+#
+#              if [ ! -f android/app/google-services.json ]; then
+#                echo "❌ google-services.json missing!"
+#                exit 1
+#              fi
+#
+#              cat android/app/google-services.json
+#
+#              export API_KEY=$(jq -r '.client[0].api_key[0].current_key' android/app/google-services.json)
+#              export APP_ID=$(jq -r '.client[0].client_info.mobilesdk_app_id' android/app/google-services.json)
+#              export PROJECT_ID=$(jq -r '.project_info.project_id' android/app/google-services.json)
+#              export MESSAGING_SENDER_ID=$(jq -r '.project_info.project_number' android/app/google-services.json)
+#              export STORAGE_BUCKET=$(jq -r '.project_info.storage_bucket' android/app/google-services.json)
+#
+#              echo "export API_KEY=$API_KEY" >> $CM_ENV
+#              echo "export APP_ID=$APP_ID" >> $CM_ENV
+#              echo "export PROJECT_ID=$PROJECT_ID" >> $CM_ENV
+#              echo "export MESSAGING_SENDER_ID=$MESSAGING_SENDER_ID" >> $CM_ENV
+#              echo "export STORAGE_BUCKET=$STORAGE_BUCKET" >> $CM_ENV
+#
+#              echo "✅ Firebase config exported"
+#            else
+#              echo "🚫 Firebase config skipped (PUSH_NOTIFY is not true)"
+#            fi
 
 
     # - &read_json
@@ -307,20 +334,35 @@ definitions:
     #         flutter pub get
     #         flutter build apk  --debug --dart-define=WEB_URL="$WEB_URL" --dart-define=PUSH_NOTIFY="$PUSH_NOTIFY"
     #       fi
-       
+
     - &get_logo
       name: Get logo image from logoUrl
       script: |
-        mkdir -p assets/images/
-        wget -O assets/images/logo.png $LOGO_URL
-        flutter pub get
+        echo "🚀 Started: Downloading logo from $LOGO_URL"
+            mkdir -p assets/images/
+            wget -O assets/images/logo.png $LOGO_URL
+            if [ $? -ne 0 ]; then
+              echo "❌ Error: Failed to download logo"
+              exit 1
+            fi
+            flutter pub get
+            echo "✅ Completed: Logo downloaded"
+#        mkdir -p assets/images/
+#        wget -O assets/images/logo.png $LOGO_URL
+#        flutter pub get
 
     - &get_splash
       name: Get splash screen image from splash image from Url
       script: |
+        echo "🚀 Started: Downloading SPLASH from $SPLASH"
         mkdir -p assets/images/
         wget -O assets/images/splash.png $SPLASH
-        flutter pub get
+        if [ $? -ne 0 ]; then
+              echo "❌ Error: Failed to download SPLASH"
+              exit 1
+            fi
+            flutter pub get
+            echo "✅ Completed: SPLASH downloaded"
 
     - &set_launcher_icons
       name: Generate Launcher Icons
@@ -342,20 +384,20 @@ definitions:
 
     
 
-    - &build_debug_apk
-      name: Build APK
-      script: |
-        flutter clean
-        flutter pub get
-        flutter build apk --debug --dart-define=WEB_URL="$WEB_URL" --dart-define=PUSH_NOTIFY="$PUSH_NOTIFY"
+#    - &build_debug_apk
+#      name: Build APK
+#      script: |
+#        flutter clean
+#        flutter pub get
+#        flutter build apk --debug --dart-define=WEB_URL="$WEB_URL" --dart-define=PUSH_NOTIFY="$PUSH_NOTIFY"
 
 
-    - &build_release_apk
-      name: Build APK
-      script: |
-        flutter clean
-        flutter pub get
-        flutter build apk --release --dart-define=WEB_URL="$WEB_URL" --dart-define=PUSH_NOTIFY="$PUSH_NOTIFY"
+#    - &build_release_apk
+#      name: Build APK
+#      script: |
+#        flutter clean
+#        flutter pub get
+#        flutter build apk --release --dart-define=WEB_URL="$WEB_URL" --dart-define=PUSH_NOTIFY="$PUSH_NOTIFY"
 
 
     - &update_android_package

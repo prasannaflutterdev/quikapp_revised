@@ -351,55 +351,7 @@ class _MyAppState extends State<MyApp> {
         child: isSplashEnabled ? SplashScreen(onDone: () => setState(() {})) : _buildMainWebView(),
       ),
     );
-  // @override
-  // Widget build(BuildContext context) {
-  //   return MaterialApp(
-  //     debugShowCheckedModeBanner: false,
-  //     home: WillPopScope(
-  //       onWillPop: _onBackPressed,
-  //       child: Scaffold(
-  //         body: SafeArea(
-  //           child: Builder(
-  //             builder: (context) {
-  //               if (hasInternet == null) {
-  //                 return const Center(child: CircularProgressIndicator()); // Loading state
-  //               } else if (hasInternet == true) {
-  //                 return InAppWebView(
-  //                   key: webViewKey,
-  //                   webViewEnvironment: webViewEnvironment,
-  //                   initialUrlRequest: URLRequest(url: WebUri(widget.webUrl)),
-  //                   pullToRefreshController: pullToRefreshController,
-  //                   onWebViewCreated: (controller) {
-  //                     webViewController = controller;
-  //
-  //                     // 🔁 Navigate to URL from terminated push
-  //                     if (_pendingInitialUrl != null) {
-  //                       webViewController?.loadUrl(
-  //                         urlRequest: URLRequest(url: WebUri(_pendingInitialUrl!)),
-  //                       );
-  //                       _pendingInitialUrl = null;
-  //                     }
-  //                   },
-  //                   shouldOverrideUrlLoading: (controller, navigationAction) async {
-  //                     final uri = navigationAction.request.url;
-  //                     if (uri != null && !uri.toString().contains(widget.webUrl)) {
-  //                       if (await canLaunchUrl(uri)) {
-  //                         await launchUrl(uri, mode: LaunchMode.externalApplication);
-  //                         return NavigationActionPolicy.CANCEL;
-  //                       }
-  //                     }
-  //                     return NavigationActionPolicy.ALLOW;
-  //                   },
-  //                 );
-  //               } else {
-  //                 return const Center(child: Text('📴 No Internet Connection'));
-  //               }
-  //             },
-  //           ),
-  //         ),
-  //       ),
-  //     ),
-  //   );
+
   }
 }
 
@@ -431,7 +383,55 @@ class SplashScreen extends StatelessWidget {
     );
   }
 }
-
+// @override
+// Widget build(BuildContext context) {
+//   return MaterialApp(
+//     debugShowCheckedModeBanner: false,
+//     home: WillPopScope(
+//       onWillPop: _onBackPressed,
+//       child: Scaffold(
+//         body: SafeArea(
+//           child: Builder(
+//             builder: (context) {
+//               if (hasInternet == null) {
+//                 return const Center(child: CircularProgressIndicator()); // Loading state
+//               } else if (hasInternet == true) {
+//                 return InAppWebView(
+//                   key: webViewKey,
+//                   webViewEnvironment: webViewEnvironment,
+//                   initialUrlRequest: URLRequest(url: WebUri(widget.webUrl)),
+//                   pullToRefreshController: pullToRefreshController,
+//                   onWebViewCreated: (controller) {
+//                     webViewController = controller;
+//
+//                     // 🔁 Navigate to URL from terminated push
+//                     if (_pendingInitialUrl != null) {
+//                       webViewController?.loadUrl(
+//                         urlRequest: URLRequest(url: WebUri(_pendingInitialUrl!)),
+//                       );
+//                       _pendingInitialUrl = null;
+//                     }
+//                   },
+//                   shouldOverrideUrlLoading: (controller, navigationAction) async {
+//                     final uri = navigationAction.request.url;
+//                     if (uri != null && !uri.toString().contains(widget.webUrl)) {
+//                       if (await canLaunchUrl(uri)) {
+//                         await launchUrl(uri, mode: LaunchMode.externalApplication);
+//                         return NavigationActionPolicy.CANCEL;
+//                       }
+//                     }
+//                     return NavigationActionPolicy.ALLOW;
+//                   },
+//                 );
+//               } else {
+//                 return const Center(child: Text('📴 No Internet Connection'));
+//               }
+//             },
+//           ),
+//         ),
+//       ),
+//     ),
+//   );
 
 // class _MyAppState extends State<MyApp> {
 //   final GlobalKey webViewKey = GlobalKey();
