@@ -93,29 +93,36 @@ definitions:
       name: Get splash screen image from splash image from Url
       script: |
         if [ "$IS_SPLASH" = "true" ]; then
-        echo "🚀 Started: Downloading splash assets"
-      
-        mkdir -p assets/images/
-      
-        # Download splash logo
-        echo "⬇️ Downloading splash logo from: $SPLASH"
-        wget -O assets/images/splash.png "$SPLASH"
-        if [ $? -ne 0 ]; then
-        echo "❌ Error: Failed to download SPLASH logo"
-        exit 1
-        fi
-      
-        # Download splash background (optional)
-        if [ -n "$SPLASH_BG" ]; then
-        echo "⬇️ Downloading splash background from: $SPLASH_BG"
-        wget -O assets/images/splash_bg.png "$SPLASH_BG"
-        if [ $? -ne 0 ]; then
-        echo "❌ Error: Failed to download SPLASH background"
-        exit 1
-        fi
-        else
-        echo "ℹ️ No SPLASH_BG provided, skipping background download"
-        fi
+          echo "🚀 Started: Downloading splash assets"
+        
+          mkdir -p assets/images/
+        
+          # Download splash logo
+          echo "⬇️ Downloading splash logo from: $SPLASH"
+          wget -O assets/images/splash.png "$SPLASH"
+          if [ $? -ne 0 ]; then
+          echo "❌ Error: Failed to download SPLASH logo"
+          exit 1
+          fi
+        
+          # Download splash background (optional)
+          if [ -n "$SPLASH_BG" ]; then
+          echo "⬇️ Downloading splash background from: $SPLASH_BG"
+          wget -O assets/images/splash_bg.png "$SPLASH_BG"
+          if [ $? -ne 0 ]; then
+          echo "❌ Error: Failed to download SPLASH background"
+          exit 1
+          fi
+          else
+          echo "ℹ️ No SPLASH_BG provided, skipping background download"
+          fi
+        
+          flutter pub get
+          echo "✅ Completed: Splash assets downloaded"
+          
+          else
+          echo "⏭️ Skipping splash asset download (IS_SPLASH != true)"
+          fi
 
 #    - &generate_splash_config
 #      name: Generate splash screen config
