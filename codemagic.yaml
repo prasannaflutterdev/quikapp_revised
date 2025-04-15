@@ -304,6 +304,7 @@ definitions:
               --dart-define=IS_SPLASH="$IS_SPLASH" \
               --dart-define=SPLASH="$SPLASH" \
               --dart-define=SPLASH_BG="$SPLASH_BG" \
+              --dart-define=SPLASH_ANIMATION="$SPLASH_ANIMATION" \
               --dart-define=SPLASH_BG_COLOR="$SPLASH_BG_COLOR" \
               --dart-define=SPLASH_TAGLINE="$SPLASH_TAGLINE" \
               --dart-define=SPLASH_TAGLINE_COLOR="$SPLASH_TAGLINE_COLOR" \
