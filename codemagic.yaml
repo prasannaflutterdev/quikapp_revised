@@ -10,6 +10,7 @@ definitions:
         ORG_NAME: $ORG_NAME
         IS_SPLASH: $IS_SPLASH
         SPLASH: $SPLASH
+        SPLASH_BG: $SPLASH_BG
         SPLASH_BG_COLOR: $SPLASH_BG_COLOR
         SPLASH_TAGLINE: $SPLASH_TAGLINE
         SPLASH_TAGLINE_COLOR: $SPLASH_TAGLINE_COLOR
@@ -64,6 +65,7 @@ definitions:
         echo "WEB_URL: $WEB_URL"
         echo "IS_SPLASH: $IS_SPLASH"
         echo "SPLASH: $SPLASH"
+        ech0 "SPLASH_BG:$SPLASH_BG"
         echo "SPLASH_BG_COLOR: $SPLASH_BG_COLOR"
         echo "SPLASH_TAGLINE: $SPLASH_TAGLINE"
         echo "SPLASH_TAGLINE_COLOR: $SPLASH_TAGLINE_COLOR"
@@ -90,15 +92,28 @@ definitions:
     - &get_splash
       name: Get splash screen image from splash image from Url
       script: |
-        echo "🚀 Started: Downloading SPLASH from $SPLASH"
-        mkdir -p assets/images/
-        wget -O assets/images/splash.png $SPLASH
-        if [ $? -ne 0 ]; then
-              echo "❌ Error: Failed to download SPLASH"
-              exit 1
+        echo "🚀 Started: Downloading splash assets"
+  
+            mkdir -p assets/images/
+            
+            # Download splash logo
+            wget -O assets/images/splash.png "$SPLASH"
+            if [ $? -ne 0 ]; then
+          echo "❌ Error: Failed to download SPLASH logo"
+            exit 1
             fi
+            
+            # Download splash background (optional)
+            if [ -n "$SPLASH_BG" ]; then
+            wget -O assets/images/splash_bg.png "$SPLASH_BG"
+            if [ $? -ne 0 ]; then
+          echo "❌ Error: Failed to download SPLASH background"
+            exit 1
+            fi
+            fi
+            
             flutter pub get
-            echo "✅ Completed: SPLASH downloaded"
+          echo "✅ Completed: Splash assets downloaded"
 
     - &generate_splash_config
       name: Generate splash screen config
