@@ -89,23 +89,23 @@ definitions:
     - &generate_splash_config
       name: Generate splash screen config
       script: |
-          if [ "$IS_SPLASH" = "true" ]; then
+        if [ "$IS_SPLASH" = "true" ]; then
             SPLASH_BG_COLOR=${SPLASH_BG_COLOR:-"#ffffff"}
             echo "Generating flutter_native_splash.yaml with SPLASH_BG_COLOR=$SPLASH_BG_COLOR"
             cat > flutter_native_splash.yaml <<EOF
         flutter_native_splash:
-        color: "$SPLASH_BG_COLOR"
-        image: assets/images/splash.png
-        android: true
-        ios: true
-        web: false
-        fullscreen: true
-        android_12:
+          color: "$SPLASH_BG_COLOR"
           image: assets/images/splash.png
-          icon_background_color: "$SPLASH_BG_COLOR"
+          android: true
+          ios: true
+          web: false
+          fullscreen: true
+          android_12:
+            image: assets/images/splash.png
+            icon_background_color: "$SPLASH_BG_COLOR"
         EOF
         else
-        echo "Skipping splash screen config generation (IS_SPLASH != true)"
+          echo "Skipping splash screen config generation (IS_SPLASH != true)"
         fi
 
 #    - &generate_splash_config
@@ -291,7 +291,7 @@ definitions:
               --dart-define=IS_PHONE="$IS_PHONE" \
               --dart-define=IS_BLUETOOTH="$IS_BLUETOOTH" > flutter_build.log
               echo "✅ Build APK Compleated...."
-          fi  
+          fi
     # - &build_app
     #   name: Building App
     #   script: |
@@ -308,7 +308,7 @@ definitions:
     #       --dart-define=FIREBASE_MESSAGING_SENDER_ID="$MESSAGING_SENDER_ID" \
     #       --dart-define=FIREBASE_STORAGE_BUCKET="$STORAGE_BUCKET"  > flutter_build.log
     #     echo "✅ Build APK Compleated...."
-      
+
     #       # echo "🔍 Searching for FCM Token in build logs..."
     #       # FCM_TOKEN=$(grep 'FCM Token:' flutter_build.log | awk -F':' '{print $2}' | xargs)
 
@@ -328,7 +328,7 @@ definitions:
     #       #   echo "✅ Email sent successfully!"
     #       # else
     #       #   echo "⚠️ FCM Token not found in build logs!"
-    #       # fi           
+    #       # fi
     #     else
     #         flutter clean
     #         flutter pub get
@@ -382,7 +382,7 @@ definitions:
     #      script: |
     #        flutter build appbundle --release --dart-define=WEB_URL=$WEB_URL
 
-    
+
 
 #    - &build_debug_apk
 #      name: Build APK
@@ -448,7 +448,7 @@ workflows:
     scripts:
       - *pub_get
       - *debug_env
-      - *update_android_package  
+      - *update_android_package
       - *get_logo
       - *set_launcher_icons
       - *get_splash
@@ -478,7 +478,7 @@ workflows:
     scripts:
       - *pub_get
       - *debug_env
-      - *update_android_package  
+      - *update_android_package
       - *get_logo
       - *set_launcher_icons
       - *get_splash
