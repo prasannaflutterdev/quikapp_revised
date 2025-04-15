@@ -29,6 +29,10 @@ const bool isContactEnabled = bool.fromEnvironment('IS_CONTACT', defaultValue: f
 const bool isSMSEnabled = bool.fromEnvironment('IS_SMS', defaultValue: false);
 const bool isPhoneEnabled = bool.fromEnvironment('IS_PHONE', defaultValue: false);
 const bool isBluetoothEnabled = bool.fromEnvironment('IS_BLUETOOTH', defaultValue: false);
+const splashTagline = String.fromEnvironment('SPLASH_TAGLINE');
+const splashAnimation = String.fromEnvironment('SPLASH_ANIMATION');
+const splashDuration = int.fromEnvironment('SPLASH_DURATION', defaultValue: 3);
+const isSplashEnabled = bool.fromEnvironment('IS_SPLASH', defaultValue: false);
 
 WebViewEnvironment? webViewEnvironment;
 
@@ -302,6 +306,41 @@ class _MyAppState extends State<MyApp> {
     }
     return true;
   }
+  Widget _buildMainWebView() {
+    return Scaffold(
+      body: SafeArea(
+        child: Builder(
+          builder: (context) {
+            if (hasInternet == null) return const Center(child: CircularProgressIndicator());
+            if (hasInternet == false) return const Center(child: Text('📴 No Internet Connection'));
+            return InAppWebView(
+              key: webViewKey,
+              webViewEnvironment: webViewEnvironment,
+              initialUrlRequest: URLRequest(url: WebUri(widget.webUrl)),
+              pullToRefreshController: pullToRefreshController,
+              onWebViewCreated: (controller) {
+                webViewController = controller;
+                if (_pendingInitialUrl != null) {
+                  webViewController?.loadUrl(urlRequest: URLRequest(url: WebUri(_pendingInitialUrl!)));
+                  _pendingInitialUrl = null;
+                }
+              },
+              shouldOverrideUrlLoading: (controller, navigationAction) async {
+                final uri = navigationAction.request.url;
+                if (uri != null && !uri.toString().contains(widget.webUrl)) {
+                  if (await canLaunchUrl(uri)) {
+                    await launchUrl(uri, mode: LaunchMode.externalApplication);
+                    return NavigationActionPolicy.CANCEL;
+                  }
+                }
+                return NavigationActionPolicy.ALLOW;
+              },
+            );
+          },
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -309,51 +348,90 @@ class _MyAppState extends State<MyApp> {
       debugShowCheckedModeBanner: false,
       home: WillPopScope(
         onWillPop: _onBackPressed,
-        child: Scaffold(
-          body: SafeArea(
-            child: Builder(
-              builder: (context) {
-                if (hasInternet == null) {
-                  return const Center(child: CircularProgressIndicator()); // Loading state
-                } else if (hasInternet == true) {
-                  return InAppWebView(
-                    key: webViewKey,
-                    webViewEnvironment: webViewEnvironment,
-                    initialUrlRequest: URLRequest(url: WebUri(widget.webUrl)),
-                    pullToRefreshController: pullToRefreshController,
-                    onWebViewCreated: (controller) {
-                      webViewController = controller;
+        child: isSplashEnabled ? SplashScreen(onDone: () => setState(() {})) : _buildMainWebView(),
+      ),
+    );
+  // @override
+  // Widget build(BuildContext context) {
+  //   return MaterialApp(
+  //     debugShowCheckedModeBanner: false,
+  //     home: WillPopScope(
+  //       onWillPop: _onBackPressed,
+  //       child: Scaffold(
+  //         body: SafeArea(
+  //           child: Builder(
+  //             builder: (context) {
+  //               if (hasInternet == null) {
+  //                 return const Center(child: CircularProgressIndicator()); // Loading state
+  //               } else if (hasInternet == true) {
+  //                 return InAppWebView(
+  //                   key: webViewKey,
+  //                   webViewEnvironment: webViewEnvironment,
+  //                   initialUrlRequest: URLRequest(url: WebUri(widget.webUrl)),
+  //                   pullToRefreshController: pullToRefreshController,
+  //                   onWebViewCreated: (controller) {
+  //                     webViewController = controller;
+  //
+  //                     // 🔁 Navigate to URL from terminated push
+  //                     if (_pendingInitialUrl != null) {
+  //                       webViewController?.loadUrl(
+  //                         urlRequest: URLRequest(url: WebUri(_pendingInitialUrl!)),
+  //                       );
+  //                       _pendingInitialUrl = null;
+  //                     }
+  //                   },
+  //                   shouldOverrideUrlLoading: (controller, navigationAction) async {
+  //                     final uri = navigationAction.request.url;
+  //                     if (uri != null && !uri.toString().contains(widget.webUrl)) {
+  //                       if (await canLaunchUrl(uri)) {
+  //                         await launchUrl(uri, mode: LaunchMode.externalApplication);
+  //                         return NavigationActionPolicy.CANCEL;
+  //                       }
+  //                     }
+  //                     return NavigationActionPolicy.ALLOW;
+  //                   },
+  //                 );
+  //               } else {
+  //                 return const Center(child: Text('📴 No Internet Connection'));
+  //               }
+  //             },
+  //           ),
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  }
+}
 
-                      // 🔁 Navigate to URL from terminated push
-                      if (_pendingInitialUrl != null) {
-                        webViewController?.loadUrl(
-                          urlRequest: URLRequest(url: WebUri(_pendingInitialUrl!)),
-                        );
-                        _pendingInitialUrl = null;
-                      }
-                    },
-                    shouldOverrideUrlLoading: (controller, navigationAction) async {
-                      final uri = navigationAction.request.url;
-                      if (uri != null && !uri.toString().contains(widget.webUrl)) {
-                        if (await canLaunchUrl(uri)) {
-                          await launchUrl(uri, mode: LaunchMode.externalApplication);
-                          return NavigationActionPolicy.CANCEL;
-                        }
-                      }
-                      return NavigationActionPolicy.ALLOW;
-                    },
-                  );
-                } else {
-                  return const Center(child: Text('📴 No Internet Connection'));
-                }
-              },
+class SplashScreen extends StatelessWidget {
+  final VoidCallback onDone;
+  const SplashScreen({super.key, required this.onDone});
+
+  @override
+  Widget build(BuildContext context) {
+    Future.delayed(Duration(seconds: splashDuration), onDone);
+    return Scaffold(
+      // backgroundColor: Colors.white,
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            splashAnimation.isNotEmpty
+                ? Image.asset(splashAnimation, height: 120)
+                : const FlutterLogo(size: 120),
+            const SizedBox(height: 20),
+            Text(
+              splashTagline,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+              textAlign: TextAlign.center,
             ),
-          ),
+          ],
         ),
       ),
     );
   }
 }
+
 
 // class _MyAppState extends State<MyApp> {
 //   final GlobalKey webViewKey = GlobalKey();

@@ -8,7 +8,13 @@ definitions:
       vars:
         APP_NAME: $APP_NAME
         ORG_NAME: $ORG_NAME
+        IS_SPLASH: $IS_SPLASH
         SPLASH: $SPLASH
+        SPLASH_BG_COLOR: $SPLASH_BG_COLOR
+        SPLASH_TAGLINE: $SPLASH_TAGLINE
+        SPLASH_TAGLINE_COLOR: $SPLASH_TAGLINE_COLOR
+        SPLASH_ANIMATION: $SPLASH_ANIMATION
+        SPLASH_DURATION: $SPLASH_DURATION
         LOGO_URL: $LOGO_URL
         WEB_URL: $WEB_URL
         url: $WEB_URL
@@ -57,21 +63,49 @@ definitions:
         echo "ORG_NAME: $ORG_NAME"
         echo "WEB_URL: $WEB_URL"
         echo "SPLASH: $SPLASH"
+        echo "SPLASH_BG_COLOR: $SPLASH_BG_COLOR"
+        echo "SPLASH_TAGLINE: $SPLASH_TAGLINE"
+        echo "SPLASH_TAGLINE_COLOR: $SPLASH_TAGLINE_COLOR"
+        echo "SPLASH_ANIMATION: $SPLASH_ANIMATION"
+        echo "SPLASH_DURATION: $SPLASH_DURATION"
         echo "firebase_config_android: $firebase_config_android"
         echo "PKG_NAME: $PKG_NAME"
         echo "EMAIL_ID: $EMAIL_ID"
         echo "PUSH_NOTIFY: $PUSH_NOTIFY"
-         echo "IS_CAMERA: $IS_CAMERA"
-          echo "IS_LOCATION: $IS_LOCATION"
-          echo "IS_MIC: $IS_MIC"
-          echo "IS_NOTIFICATION: $IS_NOTIFICATION"
-          echo "IS_CONTACT: $IS_CONTACT"
-          echo "IS_SMS: $IS_SMS"
-          echo "IS_PHONE: $IS_PHONE"
-          echo "IS_BLUETOOTH: $IS_BLUETOOTH"
-  
+        echo "IS_CAMERA: $IS_CAMERA"
+        echo "IS_LOCATION: $IS_LOCATION"
+        echo "IS_MIC: $IS_MIC"
+        echo "IS_NOTIFICATION: $IS_NOTIFICATION"
+        echo "IS_CONTACT: $IS_CONTACT"
+        echo "IS_SMS: $IS_SMS"
+        echo "IS_PHONE: $IS_PHONE"
+        echo "IS_BLUETOOTH: $IS_BLUETOOTH"
 
-  
+#    - &set_splash_icons
+#      name: Add splash screen to build
+#      script: |
+#        flutter pub run flutter_native_splash:create
+#        flutter pub get
+    - &generate_splash_config
+      name: Generate splash screen config
+      script: |
+        cat > flutter_native_splash.yaml <<EOF
+        flutter_native_splash:
+          color: "$SPLASH_BG_COLOR"
+          image: assets/images/splash.png
+          android: true
+          ios: true
+          web: false
+          fullscreen: true
+          android_12:
+            image: assets/images/splash.png
+            icon_background_color: "$SPLASH_BG_COLOR"
+        EOF
+    - &set_splash_icons
+      name: Apply splash screen
+      script: |
+        flutter pub run flutter_native_splash:create
+        flutter pub get
 
     - &Inject_Firebase
       name: Inject Firebase and buildscript block
@@ -204,6 +238,10 @@ definitions:
             flutter build apk --release \
               --dart-define=WEB_URL="$WEB_URL" \
               --dart-define=PUSH_NOTIFY="$PUSH_NOTIFY" \
+              --dart-define=IS_SPLASH=$IS_SPLASH \
+              --dart-define=SPLASH_TAGLINE=$SPLASH_TAGLINE \
+              --dart-define=SPLASH_ANIMATION=$SPLASH_ANIMATION \
+              --dart-define=SPLASH_DURATION=$SPLASH_DURATION \
               --dart-define=IS_CAMERA="$IS_CAMERA" \
               --dart-define=IS_LOCATION="$IS_LOCATION" \
               --dart-define=IS_MIC="$IS_MIC" \
@@ -289,11 +327,6 @@ definitions:
       script: |
         flutter pub run flutter_launcher_icons:main
         flutter pub get
-    - &set_splash_icons
-      name: Add splash screen to build
-      script: |
-        flutter pub run flutter_native_splash:create
-        flutter pub get
 
 
     - &change_app_name
@@ -377,6 +410,7 @@ workflows:
       - *get_logo
       - *set_launcher_icons
       - *get_splash
+      - *generate_splash_config
       - *set_splash_icons
       - *change_app_name
       - *Inject_Firebase
