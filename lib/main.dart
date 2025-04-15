@@ -79,9 +79,9 @@ void main() async {
     );
 
     FirebaseMessaging messaging = FirebaseMessaging.instance;
-    // messaging.getToken().then((token) {
-    //   debugPrint("✅ FCM Token: $token");
-    // });
+    messaging.getToken().then((token) {
+      debugPrint("✅ FCM Token: $token");
+    });
 
     await messaging.setAutoInitEnabled(true);
     await messaging.requestPermission();
@@ -395,10 +395,16 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
-  late final Animation<double> _animation;
+
+  // Animations
+  late final Animation<double> _scaleAnimation;
+  late final Animation<double> _fadeAnimation;
+  late final Animation<Offset> _slideAnimation;
+  late final Animation<double> _rotationAnimation;
 
   final String splashUrl = const String.fromEnvironment('SPLASH');
   final String splashTagline = const String.fromEnvironment('SPLASH_TAGLINE');
+  final String splashAnimation = const String.fromEnvironment('SPLASH_ANIMATION', defaultValue: 'zoom');
   final Color backgroundColor = _parseHexColor(const String.fromEnvironment('SPLASH_BG_COLOR', defaultValue: "#ffffff"));
   final Color taglineColor = _parseHexColor(const String.fromEnvironment('SPLASH_TAGLINE_COLOR', defaultValue: "#000000"));
 
@@ -412,14 +418,41 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   void initState() {
     super.initState();
     debugPrint('📦 Splash image loaded from: $splashUrl');
-    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 800))..forward();
-    _animation = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
+    debugPrint('🎞️ Animation: $splashAnimation');
+
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    )..forward();
+
+    _scaleAnimation = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(CurvedAnimation(parent: _controller, curve: Curves.easeIn));
+    _slideAnimation = Tween<Offset>(begin: const Offset(0, 1), end: Offset.zero).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
+    _rotationAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(CurvedAnimation(parent: _controller, curve: Curves.elasticOut));
   }
 
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
+  }
+
+  Widget _buildAnimatedLogo() {
+    final image = Image.asset('assets/images/splash.png', width: 150, fit: BoxFit.fitWidth);
+
+    switch (splashAnimation.toLowerCase()) {
+      case 'fade':
+        return FadeTransition(opacity: _fadeAnimation, child: image);
+      case 'slide':
+        return SlideTransition(position: _slideAnimation, child: image);
+      case 'rotate':
+        return RotationTransition(turns: _rotationAnimation, child: image);
+      case 'none':
+        return image;
+      case 'zoom':
+      default:
+        return ScaleTransition(scale: _scaleAnimation, child: image);
+    }
   }
 
   @override
@@ -431,12 +464,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
           splashUrl.isNotEmpty
               ? Image.asset('assets/images/splash_bg.png', fit: BoxFit.cover)
               : const SizedBox.shrink(),
-          Center(
-            child: ScaleTransition(
-              scale: _animation,
-              child: Image.asset('assets/images/splash.png', width: 150, fit: BoxFit.fitWidth),
-            ),
-          ),
+          Center(child: _buildAnimatedLogo()),
           if (splashTagline.isNotEmpty)
             Positioned(
               bottom: 60,
