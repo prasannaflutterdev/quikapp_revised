@@ -29,6 +29,15 @@ class _MainHomeState extends State<MainHome> {
   InAppWebViewController? webViewController;
   late PullToRefreshController? pullToRefreshController;
 
+  // final Color backgroundColor = _parseHexColor(const String.fromEnvironment('SPLASH_BG_COLOR', defaultValue: "#ffffff"));
+  final Color taglineColor = _parseHexColor(const String.fromEnvironment('SPLASH_TAGLINE_COLOR', defaultValue: "#000000"));
+
+  static Color _parseHexColor(String hexColor) {
+    hexColor = hexColor.replaceFirst('#', '');
+    if (hexColor.length == 6) hexColor = 'FF$hexColor';
+    return Color(int.parse('0x$hexColor'));
+  }
+
   String url = "";
   double progress = 0;
   final urlController = TextEditingController();
@@ -74,16 +83,35 @@ class _MainHomeState extends State<MainHome> {
         [TargetPlatform.android, TargetPlatform.iOS].contains(defaultTargetPlatform) &&
         isPullDown) {
       pullToRefreshController = PullToRefreshController(
-        settings: PullToRefreshSettings(color: Colors.blue),
-        onRefresh: () async {
-          if (defaultTargetPlatform == TargetPlatform.android) {
-            webViewController?.reload();
-          } else if (defaultTargetPlatform == TargetPlatform.iOS) {
-            webViewController?.loadUrl(
-              urlRequest: URLRequest(url: await webViewController?.getUrl()),
-            );
+        settings: PullToRefreshSettings(color: taglineColor),
+          onRefresh: () async {
+            try {
+              if (defaultTargetPlatform == TargetPlatform.android) {
+                await webViewController?.reload();
+              } else if (defaultTargetPlatform == TargetPlatform.iOS) {
+                final currentUrl = await webViewController?.getUrl();
+                if (currentUrl != null) {
+                  await webViewController?.loadUrl(
+                    urlRequest: URLRequest(url: currentUrl),
+                  );
+                }
+              }
+            } catch (e) {
+              debugPrint('❌ Refresh error: $e');
+            } finally {
+              pullToRefreshController?.endRefreshing(); // ✅ Important!
+            }
           }
-        },
+
+        // onRefresh: () async {
+        //   if (defaultTargetPlatform == TargetPlatform.android) {
+        //     webViewController?.reload();
+        //   } else if (defaultTargetPlatform == TargetPlatform.iOS) {
+        //     webViewController?.loadUrl(
+        //       urlRequest: URLRequest(url: await webViewController?.getUrl()),
+        //     );
+        //   }
+        // },
       );
     } else {
       pullToRefreshController = null;
