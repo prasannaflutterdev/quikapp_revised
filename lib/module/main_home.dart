@@ -150,6 +150,10 @@ class _MainHomeState extends State<MainHome> {
   }
 
   IconData _getIconByName(String name) {
+    if (name == null || name.trim().isEmpty) {
+      return Icons.apps; // default icon when no name is provided
+    }
+
     switch (name.toLowerCase()) {
       case 'home':
         return Icons.home;
@@ -191,7 +195,7 @@ class _MainHomeState extends State<MainHome> {
       case 'discount':
         return Icons.local_offer;
       default:
-        return Icons.help_outline;
+        return Icons.apps;
     }
   }
 
@@ -366,27 +370,57 @@ class _MainHomeState extends State<MainHome> {
             ),
           ),
           bottomNavigationBar: isBottomMenu
-              ? BottomNavigationBar(
-            backgroundColor: _parseHexColor(backgroundColor),
-            selectedItemColor: _parseHexColor(activeTabColor),
-            unselectedItemColor: _parseHexColor(iconColor),
-            currentIndex: _currentIndex,
-            onTap: (index) {
-              setState(() {
-                _currentIndex = index;
-                webViewController?.loadUrl(
-                  urlRequest: URLRequest(
-                    url: WebUri(bottomMenuItems[index]['url']),
+              ? BottomAppBar(
+            color: _parseHexColor(backgroundColor),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: List.generate(bottomMenuItems.length, (index) {
+                final item = bottomMenuItems[index];
+                final isActive = _currentIndex == index;
+
+                final icon = Icon(
+                  _getIconByName(item['icon']),
+                  color: isActive
+                      ? _parseHexColor(activeTabColor)
+                      : _parseHexColor(iconColor),
+                );
+
+                final label = Text(
+                  item['label'],
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isActive
+                        ? _parseHexColor(activeTabColor)
+                        : _parseHexColor(textColor),
                   ),
                 );
-              });
-            },
-            items: bottomMenuItems.map((item) {
-              return BottomNavigationBarItem(
-                icon: Icon(_getIconByName(item['icon'])),
-                label: item['label'],
-              );
-            }).toList(),
+
+                return GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _currentIndex = index;
+                      webViewController?.loadUrl(
+                        urlRequest: URLRequest(
+                          url: WebUri(item['url']),
+                        ),
+                      );
+                    });
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                    child: iconPosition == 'beside'
+                        ? Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [icon, const SizedBox(width: 6), label],
+                    )
+                        : Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [icon, const SizedBox(height: 4), label],
+                    ),
+                  ),
+                );
+              }),
+            ),
           )
               : null,
 
