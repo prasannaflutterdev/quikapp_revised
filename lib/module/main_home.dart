@@ -149,7 +149,7 @@ class _MainHomeState extends State<MainHome> {
     });
   }
 
-  IconData _getIconByName(String name) {
+  IconData _getIconByName(String? name) {
     if (name == null || name.trim().isEmpty) {
       return Icons.apps; // default icon when no name is provided
     }
@@ -158,6 +158,7 @@ class _MainHomeState extends State<MainHome> {
       case 'home':
         return Icons.home;
       case 'info':
+      case 'about':
         return Icons.info;
       case 'phone':
         return Icons.phone;
@@ -194,6 +195,17 @@ class _MainHomeState extends State<MainHome> {
       case 'offer':
       case 'discount':
         return Icons.local_offer;
+      case 'services':
+        return Icons.miscellaneous_services;
+      case 'blogs':
+      case 'blog':
+        return Icons.article;
+      case 'company':
+      case 'about_us':
+        return Icons.business;
+      case 'more':
+      case 'menu':
+        return Icons.more_horiz;
       default:
         return Icons.apps;
     }
