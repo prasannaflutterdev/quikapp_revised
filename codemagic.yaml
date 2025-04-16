@@ -34,6 +34,12 @@ definitions:
         IS_PULLDOWN: $IS_PULLDOWN
         IS_BOTTOMMENU: $IS_BOTTOMMENU
         BOTTOMMENU_ITEMS: $BOTTOMMENU_ITEMS
+        BOTTOMMENU_BG_COLOR: $BOTTOMMENU_BG_COLOR
+        BOTTOMMENU_ICON_COLOR: $BOTTOMMENU_ICON_COLOR
+        BOTTOMMENU_TEXT_COLOR: $BOTTOMMENU_TEXT_COLOR
+        BOTTOMMENU_ACTIVE_TAB_COLOR: $BOTTOMMENU_ACTIVE_TAB_COLOR
+        BOTTOMMENU_ICON_POSITION: $BOTTOMMENU_ICON_POSITION
+        BOTTOMMENU_VISIBLE_ON: $BOTTOMMENU_VISIBLE_ON
 
   artifacts:
     #- &ipa_file build/ios/ipa/*.ipa
@@ -89,6 +95,12 @@ definitions:
         echo "IS_PULLDOWN: $IS_PULLDOWN"
         echo "IS_BOTTOMMENU: $IS_BOTTOMMENU"
         echo "BOTTOMMENU_ITEMS: $BOTTOMMENU_ITEMS"
+        echo "BOTTOMMENU_BG_COLOR: $BOTTOMMENU_BG_COLOR"  
+        echo "BOTTOMMENU_ICON_COLOR: $BOTTOMMENU_ICON_COLOR"
+        echo "BOTTOMMENU_TEXT_COLOR: $BOTTOMMENU_TEXT_COLOR"
+        echo "BOTTOMMENU_ACTIVE_TAB_COLOR: $BOTTOMMENU_ACTIVE_TAB_COLOR"
+        echo "BOTTOMMENU_ICON_POSITION: $BOTTOMMENU_ICON_POSITION"
+        echo "BOTTOMMENU_VISIBLE_ON: $BOTTOMMENU_VISIBLE_ON"
 
 #    - &set_splash_icons
 #      name: Add splash screen to build
@@ -318,6 +330,12 @@ definitions:
               --dart-define=IS_PULLDOWN="$IS_PULLDOWN" \
               --dart-define=IS_BOTTOMMENU="$IS_BOTTOMMENU" \
               --dart-define=BOTTOMMENU_ITEMS="$BOTTOMMENU_ITEMS" \
+              --dart-define=BOTTOMMENU_BG_COLOR="$BOTTOMMENU_BG_COLOR" \
+              --dart-define=BOTTOMMENU_ICON_COLOR="$BOTTOMMENU_ICON_COLOR" \
+              --dart-define=BOTTOMMENU_TEXT_COLOR="$BOTTOMMENU_TEXT_COLOR" \
+              --dart-define=BOTTOMMENU_ACTIVE_TAB_COLOR="$BOTTOMMENU_ACTIVE_TAB_COLOR" \
+              --dart-define=BOTTOMMENU_ICON_POSITION="$BOTTOMMENU_ICON_POSITION" \
+              --dart-define=BOTTOMMENU_VISIBLE_ON="$BOTTOMMENU_VISIBLE_ON" \
               --dart-define=IS_CAMERA="$IS_CAMERA" \
               --dart-define=IS_LOCATION="$IS_LOCATION" \
               --dart-define=IS_MIC="$IS_MIC" \
@@ -328,7 +346,7 @@ definitions:
               --dart-define=IS_BLUETOOTH="$IS_BLUETOOTH" > flutter_build.log
               echo "✅ Build APK Compleated...."
          
-              
+        
 
     # - &build_app
     #   name: Building App

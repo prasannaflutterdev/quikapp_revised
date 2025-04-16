@@ -40,6 +40,12 @@ class _MainHomeState extends State<MainHome> {
   }
   final bool isBottomMenu = const String.fromEnvironment('IS_BOTTOMMENU', defaultValue: 'false') == 'true';
   final String bottomMenuRaw = const String.fromEnvironment('BOTTOMMENU_ITEMS', defaultValue: '[]');
+  final backgroundColor = const String.fromEnvironment('BOTTOMMENU_BG_COLOR', defaultValue: '#FFFFFF');
+  final iconColor = const String.fromEnvironment('BOTTOMMENU_ICON_COLOR', defaultValue: '#000000');
+  final textColor = const String.fromEnvironment('BOTTOMMENU_TEXT_COLOR', defaultValue: '#000000');
+  final activeTabColor = const String.fromEnvironment('BOTTOMMENU_ACTIVE_TAB_COLOR', defaultValue: '#FF0000');
+  final iconPosition = const String.fromEnvironment('BOTTOMMENU_ICON_POSITION', defaultValue: 'above');
+  final visibleOn = const String.fromEnvironment('BOTTOMMENU_VISIBLE_ON', defaultValue: 'all');
 
 // Convert the JSON string into a List of menu objects
   List<Map<String, dynamic>> bottomMenuItems = [];
@@ -117,36 +123,10 @@ class _MainHomeState extends State<MainHome> {
               pullToRefreshController?.endRefreshing(); // ✅ Important!
             }
           }
-
-        // onRefresh: () async {
-        //   if (defaultTargetPlatform == TargetPlatform.android) {
-        //     webViewController?.reload();
-        //   } else if (defaultTargetPlatform == TargetPlatform.iOS) {
-        //     webViewController?.loadUrl(
-        //       urlRequest: URLRequest(url: await webViewController?.getUrl()),
-        //     );
-        //   }
-        // },
       );
     } else {
       pullToRefreshController = null;
     }
-
-    // pullToRefreshController = !kIsWeb &&
-    //     [TargetPlatform.android, TargetPlatform.iOS].contains(defaultTargetPlatform)
-    //     ? PullToRefreshController(
-    //   settings: PullToRefreshSettings(color: Colors.blue),
-    //   onRefresh: () async {
-    //     if (defaultTargetPlatform == TargetPlatform.android) {
-    //       webViewController?.reload();
-    //     } else if (defaultTargetPlatform == TargetPlatform.iOS) {
-    //       webViewController?.loadUrl(
-    //         urlRequest: URLRequest(url: await webViewController?.getUrl()),
-    //       );
-    //     }
-    //   },
-    // )
-    //     : null;
 
     // ✅ Modified: Handle terminated state
     FirebaseMessaging.instance.getInitialMessage().then((message) async {
@@ -161,7 +141,7 @@ class _MainHomeState extends State<MainHome> {
   }
 
   IconData _getIconByName(String name) {
-    switch (name) {
+    switch (name.toLowerCase()) {
       case 'home':
         return Icons.home;
       case 'info':
@@ -174,6 +154,33 @@ class _MainHomeState extends State<MainHome> {
         return Icons.settings;
       case 'contact':
         return Icons.contact_page;
+      case 'shop':
+      case 'store':
+        return Icons.storefront;
+      case 'cart':
+      case 'shopping_cart':
+        return Icons.shopping_cart;
+      case 'orders':
+      case 'order':
+        return Icons.receipt_long;
+      case 'wishlist':
+      case 'favorite':
+      case 'like':
+        return Icons.favorite;
+      case 'category':
+        return Icons.category;
+      case 'account':
+      case 'profile':
+        return Icons.account_circle;
+      case 'help':
+        return Icons.help_outline;
+      case 'notifications':
+        return Icons.notifications;
+      case 'search':
+        return Icons.search;
+      case 'offer':
+      case 'discount':
+        return Icons.local_offer;
       default:
         return Icons.help_outline;
     }
@@ -351,6 +358,9 @@ class _MainHomeState extends State<MainHome> {
           ),
           bottomNavigationBar: isBottomMenu
               ? BottomNavigationBar(
+            backgroundColor: _parseHexColor(backgroundColor),
+            selectedItemColor: _parseHexColor(activeTabColor),
+            unselectedItemColor: _parseHexColor(iconColor),
             currentIndex: _currentIndex,
             onTap: (index) {
               setState(() {
