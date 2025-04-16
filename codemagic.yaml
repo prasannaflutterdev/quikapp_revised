@@ -28,9 +28,9 @@ definitions:
         IS_MIC: $IS_MIC
         IS_NOTIFICATION: $IS_NOTIFICATION
         IS_CONTACT: $IS_CONTACT
-        IS_SMS: $IS_SMS
-        IS_PHONE: $IS_PHONE
-        IS_BLUETOOTH: $IS_BLUETOOTH
+        IS_BIOMETRIC: $IS_BIOMETRIC
+        IS_CALENDAR: $IS_CALENDAR
+        IS_STORAGE: "true" # Always true by default
         IS_PULLDOWN: $IS_PULLDOWN
         IS_BOTTOMMENU: $IS_BOTTOMMENU
         BOTTOMMENU_ITEMS: $BOTTOMMENU_ITEMS
@@ -48,6 +48,7 @@ definitions:
     # - &app $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.app
     #    - &android_abb build/**/outputs/**/*.aab
     - &android_apk build/**/outputs/**/*.apk
+    - &ios_app build/ios/ipa/*.ipa
     #- &android_mapping_txt build/**/outputs/**/mapping.txt
     #3- &flutter_drive_log flutter_drive.log
 
@@ -89,9 +90,8 @@ definitions:
         echo "IS_MIC: $IS_MIC"
         echo "IS_NOTIFICATION: $IS_NOTIFICATION"
         echo "IS_CONTACT: $IS_CONTACT"
-        echo "IS_SMS: $IS_SMS"
-        echo "IS_PHONE: $IS_PHONE"
-        echo "IS_BLUETOOTH: $IS_BLUETOOTH"
+        echo "IS_BIOMETRIC: $IS_BIOMETRIC"
+        echo "IS_CALENDAR: $IS_CALENDAR"
         echo "IS_PULLDOWN: $IS_PULLDOWN"
         echo "IS_BOTTOMMENU: $IS_BOTTOMMENU"
         echo "BOTTOMMENU_ITEMS: $BOTTOMMENU_ITEMS"
@@ -338,12 +338,12 @@ definitions:
               --dart-define=BOTTOMMENU_VISIBLE_ON="$BOTTOMMENU_VISIBLE_ON" \
               --dart-define=IS_CAMERA="$IS_CAMERA" \
               --dart-define=IS_LOCATION="$IS_LOCATION" \
+              --dart-define=IS_BIOMETRIC="$IS_BIOMETRIC" \
               --dart-define=IS_MIC="$IS_MIC" \
-              --dart-define=IS_NOTIFICATION="$IS_NOTIFICATION" \
               --dart-define=IS_CONTACT="$IS_CONTACT" \
-              --dart-define=IS_SMS="$IS_SMS" \
-              --dart-define=IS_PHONE="$IS_PHONE" \
-              --dart-define=IS_BLUETOOTH="$IS_BLUETOOTH" > flutter_build.log
+              --dart-define=IS_CALENDAR="$IS_CALENDAR" \
+              --dart-define=IS_NOTIFICATION="$IS_NOTIFICATION" \
+              --dart-define=IS_STORAGE="$IS_STORAGE" > flutter_build.log
               echo "✅ Build APK Compleated...."
          
         
@@ -490,6 +490,7 @@ workflows:
     instance_type: mac_mini_m1
     environment:
       flutter: stable
+      xcode: latest
     scripts:
       - *pub_get
       - *debug_env
@@ -510,6 +511,7 @@ workflows:
       # - *build_debug_apk
     artifacts:
       - *android_apk
+      - *ios_app
       - flutter_build.log
       - fcm_token.txt
     #        - *android_abb

@@ -66,14 +66,23 @@ class _MainHomeState extends State<MainHome> {
 
   void requestPermissions() async {
     if (isCameraEnabled) await Permission.camera.request();
-    if (isLocationEnabled) await Permission.location.request();
+    if (isLocationEnabled) await Permission.location.request(); // GPS
     if (isMicEnabled) await Permission.microphone.request();
-    if (isNotificationEnabled) await Permission.notification.request();
     if (isContactEnabled) await Permission.contacts.request();
-    if (isSMSEnabled) await Permission.sms.request();
-    if (isPhoneEnabled) await Permission.phone.request();
-    if (isBluetoothEnabled) await Permission.bluetooth.request();
+    if (isCalendarEnabled) await Permission.calendar.request();
+    if (isNotificationEnabled) await Permission.notification.request();
+
+    // Always request storage (as per your logic)
     await Permission.storage.request();
+    if (isBiometricEnabled) {
+      if (Platform.isIOS) {
+        // Use raw value 33 for faceId (iOS)
+        await Permission.byValue(33).request();
+      } else if (Platform.isAndroid) {
+        // No need to request biometric permission manually on Android
+        // It's requested automatically by biometric plugins like local_auth
+      }
+    }
   }
 
   @override

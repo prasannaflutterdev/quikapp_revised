@@ -41,26 +41,28 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
-	<key>CADisableMinimumFrameDurationOnPhone</key>
-	<true/>
-	<key>UIApplicationSupportsIndirectInputEvents</key>
-	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>This app needs access to your camera.</string>
+    <string>This app requires camera access.</string>
 
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>This app needs access to your photo library.</string>
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>This app requires location access.</string>
 
-	<key>NSMicrophoneUsageDescription</key>
-	<string>This app needs access to your microphone.</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>This app needs access to the microphone.</string>
 
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>This app uses your location when in use.</string>
+    <key>NSContactsUsageDescription</key>
+    <string>This app needs access to your contacts.</string>
 
-	<key>NSLocationAlwaysUsageDescription</key>
-	<string>This app needs location access in the background.</string>
+    <key>NSCalendarsUsageDescription</key>
+    <string>This app uses your calendar to sync events.</string>
 
-	<key>NSBluetoothAlwaysUsageDescription</key>
-	<string>This app uses Bluetooth to connect to nearby devices.</string>
+    <key>NSFaceIDUsageDescription</key>
+    <string>This app uses Face ID for secure access.</string>
+
+    <key>NSUserNotificationUsageDescription</key>
+    <string>This app sends you important notifications.</string>
+
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>This app saves media to your photo library.</string>
 </dict>
 </plist>
