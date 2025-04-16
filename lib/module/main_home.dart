@@ -1,17 +1,14 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -73,21 +70,40 @@ class _MainHomeState extends State<MainHome> {
 
     _checkInternetConnection();
 
-    pullToRefreshController = !kIsWeb &&
-        [TargetPlatform.android, TargetPlatform.iOS].contains(defaultTargetPlatform)
-        ? PullToRefreshController(
-      settings: PullToRefreshSettings(color: Colors.blue),
-      onRefresh: () async {
-        if (defaultTargetPlatform == TargetPlatform.android) {
-          webViewController?.reload();
-        } else if (defaultTargetPlatform == TargetPlatform.iOS) {
-          webViewController?.loadUrl(
-            urlRequest: URLRequest(url: await webViewController?.getUrl()),
-          );
-        }
-      },
-    )
-        : null;
+    if (!kIsWeb &&
+        [TargetPlatform.android, TargetPlatform.iOS].contains(defaultTargetPlatform) &&
+        isPullDown) {
+      pullToRefreshController = PullToRefreshController(
+        settings: PullToRefreshSettings(color: Colors.blue),
+        onRefresh: () async {
+          if (defaultTargetPlatform == TargetPlatform.android) {
+            webViewController?.reload();
+          } else if (defaultTargetPlatform == TargetPlatform.iOS) {
+            webViewController?.loadUrl(
+              urlRequest: URLRequest(url: await webViewController?.getUrl()),
+            );
+          }
+        },
+      );
+    } else {
+      pullToRefreshController = null;
+    }
+
+    // pullToRefreshController = !kIsWeb &&
+    //     [TargetPlatform.android, TargetPlatform.iOS].contains(defaultTargetPlatform)
+    //     ? PullToRefreshController(
+    //   settings: PullToRefreshSettings(color: Colors.blue),
+    //   onRefresh: () async {
+    //     if (defaultTargetPlatform == TargetPlatform.android) {
+    //       webViewController?.reload();
+    //     } else if (defaultTargetPlatform == TargetPlatform.iOS) {
+    //       webViewController?.loadUrl(
+    //         urlRequest: URLRequest(url: await webViewController?.getUrl()),
+    //       );
+    //     }
+    //   },
+    // )
+    //     : null;
 
     // ✅ Modified: Handle terminated state
     FirebaseMessaging.instance.getInitialMessage().then((message) async {
@@ -147,7 +163,7 @@ class _MainHomeState extends State<MainHome> {
 
     AndroidNotificationDetails androidDetails;
 
-    AndroidNotificationDetails _defaultAndroidDetails() {
+    AndroidNotificationDetails defaultAndroidDetails() {
       return AndroidNotificationDetails(
         'default_channel',
         'Default',
@@ -189,10 +205,10 @@ class _MainHomeState extends State<MainHome> {
           if (kDebugMode) {
             print('❌ Failed to load image: $e');
           }
-          androidDetails = _defaultAndroidDetails();
+          androidDetails = defaultAndroidDetails();
         }
       } else {
-        androidDetails = _defaultAndroidDetails();
+        androidDetails = defaultAndroidDetails();
       }
 
       flutterLocalNotificationsPlugin.show(

@@ -1,20 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:fluttertoast/fluttertoast.dart';
-import 'package:http/http.dart' as http;
-import 'package:path_provider/path_provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:permission_handler/permission_handler.dart';
 
 import 'module/myapp.dart';
 
@@ -31,10 +24,14 @@ const bool isContactEnabled = bool.fromEnvironment('IS_CONTACT', defaultValue: f
 const bool isSMSEnabled = bool.fromEnvironment('IS_SMS', defaultValue: false);
 const bool isPhoneEnabled = bool.fromEnvironment('IS_PHONE', defaultValue: false);
 const bool isBluetoothEnabled = bool.fromEnvironment('IS_BLUETOOTH', defaultValue: false);
-const splashTagline = String.fromEnvironment('SPLASH_TAGLINE');
-const splashAnimation = String.fromEnvironment('SPLASH_ANIMATION');
 const splashDuration = int.fromEnvironment('SPLASH_DURATION', defaultValue: 3);
 const isSplashEnabled = bool.fromEnvironment('IS_SPLASH', defaultValue: false);
+const String splashUrl = String.fromEnvironment('SPLASH');
+const String splashBgUrl = String.fromEnvironment('SPLASH_BG');
+const String splashTagline = String.fromEnvironment('SPLASH_TAGLINE');
+const String splashAnimation = String.fromEnvironment('SPLASH_ANIMATION', defaultValue: 'zoom');
+const bool isPullDown = bool.fromEnvironment('IS_PULLDOWN', defaultValue: false);
+
 
 WebViewEnvironment? webViewEnvironment;
 
