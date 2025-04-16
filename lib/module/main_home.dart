@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -31,12 +32,17 @@ class _MainHomeState extends State<MainHome> {
 
   // final Color backgroundColor = _parseHexColor(const String.fromEnvironment('SPLASH_BG_COLOR', defaultValue: "#ffffff"));
   final Color taglineColor = _parseHexColor(const String.fromEnvironment('SPLASH_TAGLINE_COLOR', defaultValue: "#000000"));
-
+  int _currentIndex = 0;
   static Color _parseHexColor(String hexColor) {
     hexColor = hexColor.replaceFirst('#', '');
     if (hexColor.length == 6) hexColor = 'FF$hexColor';
     return Color(int.parse('0x$hexColor'));
   }
+  final bool isBottomMenu = const String.fromEnvironment('IS_BOTTOMMENU', defaultValue: 'false') == 'true';
+  final String bottomMenuRaw = const String.fromEnvironment('BOTTOMMENU_ITEMS', defaultValue: '[]');
+
+// Convert the JSON string into a List of menu objects
+  List<Map<String, dynamic>> bottomMenuItems = [];
 
   String url = "";
   double progress = 0;
@@ -71,6 +77,15 @@ class _MainHomeState extends State<MainHome> {
 
     if (pushNotify == true) {
       setupFirebaseMessaging();
+    }
+    if (isBottomMenu == true) {
+    try {
+      bottomMenuItems = List<Map<String, dynamic>>.from(json.decode(bottomMenuRaw));
+    } catch (e) {
+      if (kDebugMode) {
+        print("Invalid bottom menu JSON: $e");
+      }
+    }
     }
 
     Connectivity().onConnectivityChanged.listen((_) {
@@ -143,6 +158,25 @@ class _MainHomeState extends State<MainHome> {
         await _showLocalNotification(message);
       }
     });
+  }
+
+  IconData _getIconByName(String name) {
+    switch (name) {
+      case 'home':
+        return Icons.home;
+      case 'info':
+        return Icons.info;
+      case 'phone':
+        return Icons.phone;
+      case 'lock':
+        return Icons.lock;
+      case 'settings':
+        return Icons.settings;
+      case 'contact':
+        return Icons.contact_page;
+      default:
+        return Icons.help_outline;
+    }
   }
 
   /// ✅ Navigation from notification
@@ -315,7 +349,31 @@ class _MainHomeState extends State<MainHome> {
               },
             ),
           ),
+          bottomNavigationBar: isBottomMenu
+              ? BottomNavigationBar(
+            currentIndex: _currentIndex,
+            onTap: (index) {
+              setState(() {
+                _currentIndex = index;
+                webViewController?.loadUrl(
+                  urlRequest: URLRequest(
+                    url: WebUri(bottomMenuItems[index]['url']),
+                  ),
+                );
+              });
+            },
+            items: bottomMenuItems.map((item) {
+              return BottomNavigationBarItem(
+                icon: Icon(_getIconByName(item['icon'])),
+                label: item['label'],
+              );
+            }).toList(),
+          )
+              : null,
+
+
         ),
+
       ),
     );
 

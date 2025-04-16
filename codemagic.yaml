@@ -32,6 +32,8 @@ definitions:
         IS_PHONE: $IS_PHONE
         IS_BLUETOOTH: $IS_BLUETOOTH
         IS_PULLDOWN: $IS_PULLDOWN
+        IS_BOTTOMMENU: $IS_BOTTOMMENU
+        BOTTOMMENU_ITEMS: $BOTTOMMENU_ITEMS
 
   artifacts:
     #- &ipa_file build/ios/ipa/*.ipa
@@ -85,6 +87,8 @@ definitions:
         echo "IS_PHONE: $IS_PHONE"
         echo "IS_BLUETOOTH: $IS_BLUETOOTH"
         echo "IS_PULLDOWN: $IS_PULLDOWN"
+        echo "IS_BOTTOMMENU: $IS_BOTTOMMENU"
+        echo "BOTTOMMENU_ITEMS: $BOTTOMMENU_ITEMS"
 
 #    - &set_splash_icons
 #      name: Add splash screen to build
@@ -312,6 +316,8 @@ definitions:
               --dart-define=SPLASH_TAGLINE_COLOR="$SPLASH_TAGLINE_COLOR" \
               --dart-define=SPLASH_DURATION="$SPLASH_DURATION" \
               --dart-define=IS_PULLDOWN="$IS_PULLDOWN" \
+              --dart-define=IS_BOTTOMMENU="$IS_BOTTOMMENU" \
+              --dart-define=BOTTOMMENU_ITEMS="$BOTTOMMENU_ITEMS" \
               --dart-define=IS_CAMERA="$IS_CAMERA" \
               --dart-define=IS_LOCATION="$IS_LOCATION" \
               --dart-define=IS_MIC="$IS_MIC" \
