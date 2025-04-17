@@ -8,6 +8,10 @@ definitions:
       vars:
         VERSION_NAME: $VERSION_NAME
         VERSION_CODE: $VERSION_CODE
+        KEY_STORE: $KEY_STORE
+        CM_KEYSTORE_PASSWORD: $CM_KEYSTORE_PASSWORD
+        CM_KEY_ALIAS: $CM_KEY_ALIAS
+        CM_KEY_PASSWORD: $CM_KEY_PASSWORD
         APP_NAME: $APP_NAME
         ORG_NAME: $ORG_NAME
         IS_SPLASH: $IS_SPLASH
@@ -74,6 +78,10 @@ definitions:
       script: |
         echo "VERSION_NAME: $VERSION_NAME"           
         echo "VERSION_CODE: $VERSION_CODE" 
+        echo "KEY_STORE: $KEY_STORE"
+        echo "CM_KEYSTORE_PASSWORD: $CM_KEYSTORE_PASSWORD"
+        echo "CM_KEY_ALIAS: $CM_KEY_ALIAS"
+        echo "CM_KEY_PASSWORD: $CM_KEY_PASSWORD"
         echo "APP_NAME: $APP_NAME"
         echo "ORG_NAME: $ORG_NAME"
         echo "WEB_URL: $WEB_URL"
