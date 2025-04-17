@@ -50,7 +50,7 @@ definitions:
     # - &app $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.app
     - &android_abb build/**/outputs/**/*.aab
     - &android_apk build/**/outputs/**/*.apk
-    - &ios_app build/ios/ipa/*.ipa
+#    - &ios_app build/ios/ipa/*.ipa
     #- &android_mapping_txt build/**/outputs/**/mapping.txt
     #3- &flutter_drive_log flutter_drive.log
 
@@ -265,8 +265,43 @@ definitions:
         flutter pub run rename setAppName --value "$APP_NAME"
         flutter pub get
 
-
-
+    - &key_store
+      name: Setup Android keystore and insert Gradle signing block
+      script: |
+        echo "✅ Downloading keystore from $KEY_STORE..."
+        wget -O android/app/keystore.jks "$KEY_STORE"
+    
+        echo "✅ Writing key.properties..."
+        cat > android/key.properties <<EOF
+        storeFile=keystore.jks
+        storePassword=$CM_KEYSTORE_PASSWORD
+        keyAlias=$CM_KEY_ALIAS
+        keyPassword=$CM_KEY_PASSWORD
+        EOF
+    
+        echo "✅ Ensuring keystoreProperties block exists in build.gradle..."
+        GRADLE_FILE=android/app/build.gradle
+    
+        if ! grep -q "keystoreProperties = new Properties()" $GRADLE_FILE; then
+        awk -v block="\
+        def keystoreProperties = new Properties()\n\
+        def keystorePropertiesFile = rootProject.file(\"key.properties\")\n\
+        if (keystorePropertiesFile.exists()) {\n\
+        keystoreProperties.load(new FileInputStream(keystorePropertiesFile))\n\
+        }" '
+        BEGIN { inserted = 0 }
+        {
+        print $0
+        if (!inserted && $0 ~ /^plugins\s*{/) {
+        print ""
+        print block
+        print ""
+        inserted = 1
+        }
+        }' $GRADLE_FILE > tmp && mv tmp $GRADLE_FILE
+        else
+        echo "✅ keystoreProperties already present."
+        fi
 
 #    - &update_android_package
 #      name: Update Android Package Name
@@ -421,6 +456,7 @@ workflows:
 #      - *set_splash_icons
       - *change_app_name
       - *Inject_Firebase
+      - *key_store
       - *get_json
       # - *read_json
       - *update_sdkver
@@ -431,7 +467,7 @@ workflows:
     artifacts:
       - *android_apk
       - *android_abb
-      - *ios_app
+#      - *ios_app
       - flutter_build.log
       - flutter_build2.log
       - fcm_token.txt
@@ -453,6 +489,7 @@ workflows:
       - *get_splash
 #      - *set_splash_icons
       - *change_app_name
+      - *key_store
       - *Inject_Firebase
       # - *build_release_apk
     # - *build_abb

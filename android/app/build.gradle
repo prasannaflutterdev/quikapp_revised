@@ -5,11 +5,6 @@ plugins {
     id "dev.flutter.flutter-gradle-plugin"
     // id 'com.google.gms.google-services'
 }
-def keystoreProperties = new Properties()
-def keystorePropertiesFile = rootProject.file("key.properties")
-if (keystorePropertiesFile.exists()) {
-    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
-}
 
 android {
     namespace = "com.example.quikapp_flutter_latest"
@@ -43,14 +38,12 @@ android {
             storeFile file(keystoreProperties['storeFile'])
             storePassword keystoreProperties['storePassword']
         }
-    } // <- this was missing
-
+    }
     buildTypes {
         release {
-            // signingConfig signingConfigs.release
-            minifyEnabled false
-            shrinkResources false
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            // TODO: Add your own signing config for the release build.
+            // Signing with the debug keys for now, so `flutter run --release` works.
+            signingConfig = signingConfigs.release
         }
     }
 }
