@@ -276,44 +276,44 @@ definitions:
     - &key_store
       name: Setup Android keystore and insert Gradle signing block
       script: |
-        echo "✅ Downloading keystore from \$KEY_STORE..."
-        curl -o android/app/keystore.jks "$KEY_STORE"
-        
-        echo "✅ Writing key.properties..."
-        cat > android/key.properties <<EOF
-        storeFile=keystore.jks
-        storePassword=$CM_KEYSTORE_PASSWORD
-        keyAlias=$CM_KEY_ALIAS
-        keyPassword=$CM_KEY_PASSWORD
-        EOF
-        
-        GRADLE_FILE=android/app/build.gradle
-        echo "✅ Checking if keystoreProperties block already exists..."
-        
-        if ! grep -q "keystoreProperties = new Properties()" $GRADLE_FILE; then
-          echo "✅ Injecting keystoreProperties block at the top of build.gradle..."
-          awk -v block="\
-            def keystoreProperties = new Properties()\n\
-            def keystorePropertiesFile = rootProject.file(\"key.properties\")\n\
-            if (keystorePropertiesFile.exists()) {\n\
-            keystoreProperties.load(new FileInputStream(keystorePropertiesFile))\n\
-        }" '
-                    BEGIN { inserted = 0 }
-                    {
-                      if (!inserted && $0 ~ /^apply plugin|^plugins|^import|^buildscript|^\/\/|^\/\*/) {
-                        print $0
-                      } else if (!inserted) {
-                        print block "\n"
+          echo "✅ Downloading keystore from \$KEY_STORE..."
+          curl -o android/app/keystore.jks "$KEY_STORE"
+      
+          echo "✅ Writing key.properties..."
+          cat > android/key.properties <<EOF
+          storeFile=keystore.jks
+          storePassword=$CM_KEYSTORE_PASSWORD
+          keyAlias=$CM_KEY_ALIAS
+          keyPassword=$CM_KEY_PASSWORD
+          EOF
+      
+          GRADLE_FILE=android/app/build.gradle
+      
+          if ! grep -q "keystoreProperties = new Properties()" $GRADLE_FILE; then
+          echo "✅ Injecting keystoreProperties block AFTER plugins block..."
+          awk '
+          BEGIN { inside_plugins = 0; injected = 0 }
+          {
           print $0
-          inserted = 1
-        } else {
-          print $0
-        }
-        }
+          if ($0 ~ /^plugins\s*{/) inside_plugins = 1
+          if (inside_plugins && $0 ~ /^}/) {
+          inside_plugins = 0
+          if (!injected) {
+          print ""
+          print "def keystoreProperties = new Properties()"
+          print "def keystorePropertiesFile = rootProject.file(\"key.properties\")"
+          print "if (keystorePropertiesFile.exists()) {"
+          print "    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))"
+          print "}"
+          print ""
+          injected = 1
+          }
+          }
+          }
           ' $GRADLE_FILE > tmp && mv tmp $GRADLE_FILE
-            else
+          else
             echo "✅ keystoreProperties block already exists."
-            fi
+          fi
 
 #    - &update_android_package
 #      name: Update Android Package Name
