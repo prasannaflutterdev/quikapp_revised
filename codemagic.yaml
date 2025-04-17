@@ -6,6 +6,8 @@ definitions:
   environment:
     app_details:
       vars:
+        VERSION_NAME: $VERSION_NAME
+        VERSION_CODE: $VERSION_CODE
         APP_NAME: $APP_NAME
         ORG_NAME: $ORG_NAME
         IS_SPLASH: $IS_SPLASH
@@ -70,6 +72,8 @@ definitions:
     - &debug_env
       name: Debug Environment Variables
       script: |
+        echo "VERSION_NAME: $VERSION_NAME"           
+        echo "VERSION_CODE: $VERSION_CODE" 
         echo "APP_NAME: $APP_NAME"
         echo "ORG_NAME: $ORG_NAME"
         echo "WEB_URL: $WEB_URL"
@@ -308,6 +312,19 @@ definitions:
         else
           echo "🚫 Firebase config skipped (PUSH_NOTIFY is not true)"
         fi
+    - &update_appversion
+      name: Inject version info into build.gradle (fallback)
+      script: |
+        echo "🔄 Updating Flutter pubspec version... ${VERSION_NAME}+${VERSION_CODE}"
+        flutter pub version $VERSION_NAME+$VERSION_CODE
+  
+        echo "🔍 Injecting versionCode: ${VERSION_CODE} into build.gradle"
+        sed -i'' -e "s/versionCode.*/versionCode ${VERSION_CODE}/" android/app/build.gradle
+  
+        echo "🔍 Injecting versionName: ${VERSION_NAME} into build.gradle"
+        sed -i'' -e "s/versionName \".*\"/versionName \"${VERSION_NAME}\"/" android/app/build.gradle
+  
+        echo "✅ Version update complete: $VERSION_NAME ($VERSION_CODE)"
 
 
     - &build_app
@@ -526,6 +543,7 @@ workflows:
     scripts:
       - *pub_get
       - *debug_env
+      - *update_appversion
       - *update_android_package
       - *get_logo
       - *set_launcher_icons
@@ -558,6 +576,7 @@ workflows:
     scripts:
       - *pub_get
       - *debug_env
+      - *update_appversion
       - *update_android_package
       - *get_logo
       - *set_launcher_icons
