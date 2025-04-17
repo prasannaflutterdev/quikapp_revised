@@ -49,6 +49,8 @@ android {
         release {
             signingConfig signingConfigs.release
             minifyEnabled false
+            shrinkResources false
+            // Keep this line to avoid proguard issues even if minify is off
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
