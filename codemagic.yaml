@@ -286,26 +286,6 @@ definitions:
         keyAlias=$CM_KEY_ALIAS
         keyPassword=$CM_KEY_PASSWORD
         EOF
-    
-        GRADLE_FILE=android/app/build.gradle
-    
-        # ✅ Only insert if not already added
-        if ! grep -q "def keystoreProperties = new Properties()" $GRADLE_FILE; then
-        echo "✅ Injecting keystoreProperties at the top of build.gradle"
-        awk '
-        BEGIN {
-        print "def keystoreProperties = new Properties()"
-        print "def keystorePropertiesFile = rootProject.file(\"key.properties\")"
-        print "if (keystorePropertiesFile.exists()) {"
-        print "    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))"
-        print "}"
-        print ""
-        }
-        { print }
-        ' $GRADLE_FILE > tmp && mv tmp $GRADLE_FILE
-        else
-          echo "✅ keystoreProperties already present"
-        fi
 
 #    - &update_android_package
 #      name: Update Android Package Name
@@ -374,8 +354,8 @@ definitions:
       name: Building App with Feature Flags
       script: |
         echo "✅ Start Building APK...."
-        flutter clean
-        flutter pub get
+#        flutter clean
+#        flutter pub get
         flutter build apk --release \
             --dart-define=WEB_URL="$WEB_URL" \
             --dart-define=PUSH_NOTIFY="$PUSH_NOTIFY" \
@@ -451,6 +431,7 @@ workflows:
     scripts:
       - *pub_get
       - *debug_env
+      - *key_store
       - *update_appversion
       - *update_android_package
       - *get_logo
@@ -460,7 +441,7 @@ workflows:
 #      - *set_splash_icons
       - *change_app_name
       - *Inject_Firebase
-      - *key_store
+
       - *get_json
       # - *read_json
       - *update_sdkver
