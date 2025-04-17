@@ -79,7 +79,7 @@ definitions:
         echo "WEB_URL: $WEB_URL"
         echo "IS_SPLASH: $IS_SPLASH"
         echo "SPLASH: $SPLASH"
-        ech0 "SPLASH_BG:$SPLASH_BG"
+        echo "SPLASH_BG:$SPLASH_BG"
         echo "SPLASH_BG_COLOR: $SPLASH_BG_COLOR"
         echo "SPLASH_TAGLINE: $SPLASH_TAGLINE"
         echo "SPLASH_TAGLINE_COLOR: $SPLASH_TAGLINE_COLOR"
@@ -142,37 +142,61 @@ definitions:
           echo "⏭️ Skipping splash asset download (IS_SPLASH != true)"
           fi
 
-
     - &Inject_Firebase
       name: Inject Firebase and buildscript block
       script: |
         if [ "$PUSH_NOTIFY" = "true" ]; then
-            echo "📦 Enabling Firebase integration..."
+          echo "📦 Enabling Firebase integration..."
 
-            # Inject Firebase classpath only if not present
-            if ! grep -q "com.google.gms:google-services" android/build.gradle; then
-            echo "✅ Injecting Firebase classpath into android/build.gradle..."
+          # Check if Firebase classpath is already present
+          if ! grep -q 'com.google.gms:google-services' android/build.gradle; then
+            echo "✅ Firebase classpath not found, injecting..."
 
-            if ! grep -q "buildscript {" android/build.gradle; then
-              # No buildscript block at all – add it to the top
+            if ! grep -q 'buildscript {' android/build.gradle; then
+              # No buildscript block found – inject the entire block at the top
               sed -i '1s;^;buildscript {\n  repositories {\n    google()\n    mavenCentral()\n  }\n  dependencies {\n    classpath "com.google.gms:google-services:4.3.15"\n  }\n}\n\n;' android/build.gradle
               echo "✅ Full buildscript block injected"
             else
-              # buildscript exists, just insert classpath line
+              # buildscript exists – insert the classpath into the dependencies
               sed -i '/buildscript {/,/}/ s/dependencies {/dependencies {\n    classpath "com.google.gms:google-services:4.3.15"/' android/build.gradle
               echo "✅ Firebase classpath inserted into existing buildscript"
             fi
+          else
+            echo "✅ Firebase classpath already present, skipping injection"
           fi
-
-            if ! grep -q "com.google.gms:google-services" android/build.gradle; then
-              sed -i '/dependencies {/a\
-              classpath '\''com.google.gms:google-services:4.3.15'\''\
-              ' android/build.gradle
-              echo "✅ Firebase classpath added to android/build.gradle"
-            fi
-               else
-            echo "🚫 Firebase config skipped (PUSH_NOTIFY is not true)"
-          fi
+        else
+          echo "🚫 Firebase config skipped (PUSH_NOTIFY is not true)"
+        fi
+#    - &Inject_Firebase
+#      name: Inject Firebase and buildscript block
+#      script: |
+#        if [ "$PUSH_NOTIFY" = "true" ]; then
+#            echo "📦 Enabling Firebase integration..."
+#
+#            # Inject Firebase classpath only if not present
+#            if ! grep -q "com.google.gms:google-services" android/build.gradle; then
+#            echo "✅ Injecting Firebase classpath into android/build.gradle..."
+#
+#            if ! grep -q "buildscript {" android/build.gradle; then
+#              # No buildscript block at all – add it to the top
+#              sed -i '1s;^;buildscript {\n  repositories {\n    google()\n    mavenCentral()\n  }\n  dependencies {\n    classpath "com.google.gms:google-services:4.3.15"\n  }\n}\n\n;' android/build.gradle
+#              echo "✅ Full buildscript block injected"
+#            else
+#              # buildscript exists, just insert classpath line
+#              sed -i '/buildscript {/,/}/ s/dependencies {/dependencies {\n    classpath "com.google.gms:google-services:4.3.15"/' android/build.gradle
+#              echo "✅ Firebase classpath inserted into existing buildscript"
+#            fi
+#          fi
+#
+#            if ! grep -q "com.google.gms:google-services" android/build.gradle; then
+#              sed -i '/dependencies {/a\
+#              classpath '\''com.google.gms:google-services:4.3.15'\''\
+#              ' android/build.gradle
+#              echo "✅ Firebase classpath added to android/build.gradle"
+#            fi
+#               else
+#            echo "🚫 Firebase config skipped (PUSH_NOTIFY is not true)"
+#          fi
     - &get_json
       name: Get JSON file
       script: |
