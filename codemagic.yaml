@@ -354,8 +354,8 @@ definitions:
       name: Building App with Feature Flags
       script: |
         echo "✅ Start Building APK...."
-#        flutter clean
-#        flutter pub get
+        #flutter clean
+        #flutter pub get
         flutter build apk --release \
             --dart-define=WEB_URL="$WEB_URL" \
             --dart-define=PUSH_NOTIFY="$PUSH_NOTIFY" \
