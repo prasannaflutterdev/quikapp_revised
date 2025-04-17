@@ -48,7 +48,7 @@ definitions:
     #- &xcode_log /tmp/xcodebuild_logs/*.log
     #- &dsym $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
     # - &app $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.app
-    #    - &android_abb build/**/outputs/**/*.aab
+    - &android_abb build/**/outputs/**/*.aab
     - &android_apk build/**/outputs/**/*.apk
     - &ios_app build/ios/ipa/*.ipa
     #- &android_mapping_txt build/**/outputs/**/mapping.txt
@@ -106,11 +106,7 @@ definitions:
         echo "BOTTOMMENU_ICON_POSITION: $BOTTOMMENU_ICON_POSITION"
         echo "BOTTOMMENU_VISIBLE_ON: $BOTTOMMENU_VISIBLE_ON"
 
-#    - &set_splash_icons
-#      name: Add splash screen to build
-#      script: |
-#        flutter pub run flutter_native_splash:create
-#        flutter pub get
+
     - &get_splash
       name: Get splash screen image from splash image from Url
       script: |
@@ -146,54 +142,7 @@ definitions:
           echo "⏭️ Skipping splash asset download (IS_SPLASH != true)"
           fi
 
-#    - &generate_splash_config
-#      name: Generate splash screen config
-#      script: |
-#        if [ "$IS_SPLASH" = "true" ]; then
-#            SPLASH_BG_COLOR=${SPLASH_BG_COLOR:-"#ffffff"}
-#            echo "Generating flutter_native_splash.yaml with SPLASH_BG_COLOR=$SPLASH_BG_COLOR"
-#            cat > flutter_native_splash.yaml <<EOF
-#        flutter_native_splash:
-#          color: "$SPLASH_BG_COLOR"
-#          image: assets/images/splash.png
-#          android: true
-#          ios: true
-#          web: false
-#          fullscreen: true
-#          android_12:
-#            image: assets/images/splash.png
-#            icon_background_color: "$SPLASH_BG_COLOR"
-#        EOF
-#        else
-#          echo "Skipping splash screen config generation (IS_SPLASH != true)"
-#        fi
 
-
-#    - &set_splash_icons
-#      name: Apply splash screen
-#      script: |
-#          if [ "$IS_SPLASH" = "true" ]; then
-#            echo "Applying splash screen with flutter_native_splash"
-#            flutter pub get
-#            flutter pub run flutter_native_splash:create
-#          else
-#            echo "Skipping splash screen setup (IS_SPLASH != true)"
-#          fi
-    #    - &generate_splash_config
-    #      name: Generate splash screen config
-    #      script: |
-    #        cat > flutter_native_splash.yaml <<EOF
-    #        flutter_native_splash:
-    #          color: "$SPLASH_BG_COLOR"
-    #          image: assets/images/splash.png
-    #          android: true
-    #          ios: true
-    #          web: false
-    #          fullscreen: true
-    #          android_12:
-    #            image: assets/images/splash.png
-    #            icon_background_color: "$SPLASH_BG_COLOR"
-    #        EOF
     - &Inject_Firebase
       name: Inject Firebase and buildscript block
       script: |
@@ -235,69 +184,6 @@ definitions:
           echo "🚫 Firebase config skipped (PUSH_NOTIFY is not true)"
         fi
 
-#    - &read_json
-#          name: Read JSON file
-#          script: |
-#            if [ "$PUSH_NOTIFY" = "true" ]; then
-#              echo "📖 Reading google-services.json..."
-#              apt-get update && apt-get install -y jq
-#
-#              if [ ! -f android/app/google-services.json ]; then
-#                echo "❌ google-services.json missing!"
-#                exit 1
-#              fi
-#
-#              cat android/app/google-services.json
-#
-#              export API_KEY=$(jq -r '.client[0].api_key[0].current_key' android/app/google-services.json)
-#              export APP_ID=$(jq -r '.client[0].client_info.mobilesdk_app_id' android/app/google-services.json)
-#              export PROJECT_ID=$(jq -r '.project_info.project_id' android/app/google-services.json)
-#              export MESSAGING_SENDER_ID=$(jq -r '.project_info.project_number' android/app/google-services.json)
-#              export STORAGE_BUCKET=$(jq -r '.project_info.storage_bucket' android/app/google-services.json)
-#
-#              echo "export API_KEY=$API_KEY" >> $CM_ENV
-#              echo "export APP_ID=$APP_ID" >> $CM_ENV
-#              echo "export PROJECT_ID=$PROJECT_ID" >> $CM_ENV
-#              echo "export MESSAGING_SENDER_ID=$MESSAGING_SENDER_ID" >> $CM_ENV
-#              echo "export STORAGE_BUCKET=$STORAGE_BUCKET" >> $CM_ENV
-#
-#              echo "✅ Firebase config exported"
-#            else
-#              echo "🚫 Firebase config skipped (PUSH_NOTIFY is not true)"
-#            fi
-
-
-    # - &read_json
-    #   name: Read JSON file
-    #   script: |
-    #      if [ "$PUSH_NOTIFY" = "true" ]; then
-    #       echo "📖 Reading google-services.json..."
-
-    #       apt-get update && apt-get install -y jq
-
-    #       if [ ! -f android/app/google-services.json ]; then
-    #         echo "❌ google-services.json missing!"
-    #         exit 1
-    #       fi
-
-    #       cat android/app/google-services.json
-
-    #       API_KEY=$(jq -r '.client[0].api_key[0].current_key' android/app/google-services.json)
-    #       APP_ID=$(jq -r '.client[0].client_info.mobilesdk_app_id' android/app/google-services.json)
-    #       PROJECT_ID=$(jq -r '.project_info.project_id' android/app/google-services.json)
-    #       MESSAGING_SENDER_ID=$(jq -r '.project_info.project_number' android/app/google-services.json)
-    #       STORAGE_BUCKET=$(jq -r '.project_info.storage_bucket' android/app/google-services.json)
-
-    #         echo "✅ Extracted Firebase Config:"
-    #         echo "🔑 API_KEY: $API_KEY"
-    #         echo "📱 APP_ID: $APP_ID"
-    #         echo "📦 PROJECT_ID: $PROJECT_ID"
-    #         echo "📨 MESSAGING_SENDER_ID: $MESSAGING_SENDER_ID"
-    #         echo "🪣 STORAGE_BUCKET: $STORAGE_BUCKET"
-    #       else
-    #         echo "🚫 Firebase config skipped (PUSH_NOTIFY is not true)"
-    #       fi
-
     - &update_sdkver
       name: Updating SDK version
       script: |
@@ -327,119 +213,6 @@ definitions:
         echo "✅ Version update complete: $VERSION_NAME ($VERSION_CODE)"
 
 
-    - &build_app
-      name: Building App with Feature Flags
-      script: |
-          echo "✅ Start Building APK...."
-          flutter clean
-          flutter pub get
-          flutter build apk --release \
-              --dart-define=WEB_URL="$WEB_URL" \
-              --dart-define=PUSH_NOTIFY="$PUSH_NOTIFY" \
-              --dart-define=IS_SPLASH="$IS_SPLASH" \
-              --dart-define=SPLASH="$SPLASH" \
-              --dart-define=SPLASH_BG="$SPLASH_BG" \
-              --dart-define=SPLASH_ANIMATION="$SPLASH_ANIMATION" \
-              --dart-define=SPLASH_BG_COLOR="$SPLASH_BG_COLOR" \
-              --dart-define=SPLASH_TAGLINE="$SPLASH_TAGLINE" \
-              --dart-define=SPLASH_TAGLINE_COLOR="$SPLASH_TAGLINE_COLOR" \
-              --dart-define=SPLASH_DURATION="$SPLASH_DURATION" \
-              --dart-define=IS_PULLDOWN="$IS_PULLDOWN" \
-              --dart-define=IS_BOTTOMMENU="$IS_BOTTOMMENU" \
-              --dart-define=BOTTOMMENU_ITEMS="$BOTTOMMENU_ITEMS" \
-              --dart-define=BOTTOMMENU_BG_COLOR="$BOTTOMMENU_BG_COLOR" \
-              --dart-define=BOTTOMMENU_ICON_COLOR="$BOTTOMMENU_ICON_COLOR" \
-              --dart-define=BOTTOMMENU_TEXT_COLOR="$BOTTOMMENU_TEXT_COLOR" \
-              --dart-define=BOTTOMMENU_ACTIVE_TAB_COLOR="$BOTTOMMENU_ACTIVE_TAB_COLOR" \
-              --dart-define=BOTTOMMENU_ICON_POSITION="$BOTTOMMENU_ICON_POSITION" \
-              --dart-define=BOTTOMMENU_VISIBLE_ON="$BOTTOMMENU_VISIBLE_ON" \
-              --dart-define=IS_CAMERA="$IS_CAMERA" \
-              --dart-define=IS_LOCATION="$IS_LOCATION" \
-              --dart-define=IS_BIOMETRIC="$IS_BIOMETRIC" \
-              --dart-define=IS_MIC="$IS_MIC" \
-              --dart-define=IS_CONTACT="$IS_CONTACT" \
-              --dart-define=IS_CALENDAR="$IS_CALENDAR" \
-              --dart-define=IS_NOTIFICATION="$IS_NOTIFICATION" \
-              --dart-define=IS_STORAGE="$IS_STORAGE" > flutter_build.log
-              echo "✅ Build APK Compleated...."
-        
-        
-              echo "✅ Start Building IPA IOS App...."
-              flutter build ios --release \
-              --dart-define=WEB_URL="$WEB_URL" \
-              --dart-define=PUSH_NOTIFY="$PUSH_NOTIFY" \
-              --dart-define=IS_SPLASH="$IS_SPLASH" \
-              --dart-define=SPLASH="$SPLASH" \
-              --dart-define=SPLASH_BG="$SPLASH_BG" \
-              --dart-define=SPLASH_ANIMATION="$SPLASH_ANIMATION" \
-              --dart-define=SPLASH_BG_COLOR="$SPLASH_BG_COLOR" \
-              --dart-define=SPLASH_TAGLINE="$SPLASH_TAGLINE" \
-              --dart-define=SPLASH_TAGLINE_COLOR="$SPLASH_TAGLINE_COLOR" \
-              --dart-define=SPLASH_DURATION="$SPLASH_DURATION" \
-              --dart-define=IS_PULLDOWN="$IS_PULLDOWN" \
-              --dart-define=IS_BOTTOMMENU="$IS_BOTTOMMENU" \
-              --dart-define=BOTTOMMENU_ITEMS="$BOTTOMMENU_ITEMS" \
-              --dart-define=BOTTOMMENU_BG_COLOR="$BOTTOMMENU_BG_COLOR" \
-              --dart-define=BOTTOMMENU_ICON_COLOR="$BOTTOMMENU_ICON_COLOR" \
-              --dart-define=BOTTOMMENU_TEXT_COLOR="$BOTTOMMENU_TEXT_COLOR" \
-              --dart-define=BOTTOMMENU_ACTIVE_TAB_COLOR="$BOTTOMMENU_ACTIVE_TAB_COLOR" \
-              --dart-define=BOTTOMMENU_ICON_POSITION="$BOTTOMMENU_ICON_POSITION" \
-              --dart-define=BOTTOMMENU_VISIBLE_ON="$BOTTOMMENU_VISIBLE_ON" \
-              --dart-define=IS_CAMERA="$IS_CAMERA" \
-              --dart-define=IS_LOCATION="$IS_LOCATION" \
-              --dart-define=IS_BIOMETRIC="$IS_BIOMETRIC" \
-              --dart-define=IS_MIC="$IS_MIC" \
-              --dart-define=IS_CONTACT="$IS_CONTACT" \
-              --dart-define=IS_CALENDAR="$IS_CALENDAR" \
-              --dart-define=IS_NOTIFICATION="$IS_NOTIFICATION" \
-              --dart-define=IS_STORAGE="$IS_STORAGE" > flutter_build2.log
-              echo "✅ Build IPA IOS App Compleated...."
-         
-        
-
-    # - &build_app
-    #   name: Building App
-    #   script: |
-    #    if [ "$PUSH_NOTIFY" = "true" ]; then
-    #    echo "✅ Start Building APK...."
-    #       flutter clean
-    #       flutter pub get
-    #       flutter build apk --release \
-    #       --dart-define=WEB_URL="$WEB_URL" \
-    #       --dart-define=PUSH_NOTIFY="$PUSH_NOTIFY" \
-    #       --dart-define=FIREBASE_API_KEY="$API_KEY" \
-    #       --dart-define=FIREBASE_APP_ID="$APP_ID" \
-    #       --dart-define=FIREBASE_PROJECT_ID="$PROJECT_ID" \
-    #       --dart-define=FIREBASE_MESSAGING_SENDER_ID="$MESSAGING_SENDER_ID" \
-    #       --dart-define=FIREBASE_STORAGE_BUCKET="$STORAGE_BUCKET"  > flutter_build.log
-    #     echo "✅ Build APK Compleated...."
-
-    #       # echo "🔍 Searching for FCM Token in build logs..."
-    #       # FCM_TOKEN=$(grep 'FCM Token:' flutter_build.log | awk -F':' '{print $2}' | xargs)
-
-    #       # if [ -n "$FCM_TOKEN" ]; then
-    #       #   echo "FCM Token for $APP_ID at $(date): $FCM_TOKEN" > fcm_token.txt
-    #       #   # echo "✅ FCM Token Found: $FCM_TOKEN"
-    #       #   # echo "📩 FCM Token: $FCM_TOKEN" > fcm_token.txt
-
-    #       #   echo "📧 Sending FCM token to $EMAIL_ID"
-    #       #   curl -s --url 'smtps://smtp.gmail.com:465' --ssl-reqd \
-    #       #     --mail-from "$EMAIL_ID" \
-    #       #     --mail-rcpt "$EMAIL_ID" \
-    #       #     --upload-file fcm_token.txt \
-    #       #     --user "$EMAIL_ID:$EMAIL_PASSWORD" \
-    #       #     --insecure
-
-    #       #   echo "✅ Email sent successfully!"
-    #       # else
-    #       #   echo "⚠️ FCM Token not found in build logs!"
-    #       # fi
-    #     else
-    #         flutter clean
-    #         flutter pub get
-    #         flutter build apk  --debug --dart-define=WEB_URL="$WEB_URL" --dart-define=PUSH_NOTIFY="$PUSH_NOTIFY"
-    #       fi
-
     - &get_logo
       name: Get logo image from logoUrl
       script: |
@@ -452,9 +225,6 @@ definitions:
             fi
             flutter pub get
             echo "✅ Completed: Logo downloaded"
-#        mkdir -p assets/images/
-#        wget -O assets/images/logo.png $LOGO_URL
-#        flutter pub get
 
 
 
@@ -470,67 +240,142 @@ definitions:
       script: |
         flutter pub run rename setAppName --value "$APP_NAME"
         flutter pub get
-    #
-    #    - &build_abb
-    #      name: Build ABB
-    #      script: |
-    #        flutter build appbundle --release --dart-define=WEB_URL=$WEB_URL
 
 
 
-#    - &build_debug_apk
-#      name: Build APK
+
+#    - &update_android_package
+#      name: Update Android Package Name
 #      script: |
-#        flutter clean
-#        flutter pub get
-#        flutter build apk --debug --dart-define=WEB_URL="$WEB_URL" --dart-define=PUSH_NOTIFY="$PUSH_NOTIFY"
-
-
-#    - &build_release_apk
-#      name: Build APK
-#      script: |
-#        flutter clean
-#        flutter pub get
-#        flutter build apk --release --dart-define=WEB_URL="$WEB_URL" --dart-define=PUSH_NOTIFY="$PUSH_NOTIFY"
-
+#        echo "Updating Android package name..."
+#
+#        # Convert ORG_NAME and APP_NAME to lowercase and remove spaces/underscores
+#        CLEANED_ORG_NAME=$(echo "$ORG_NAME" | tr '[:upper:]' '[:lower:]' | tr -d ' _')
+#        CLEANED_APP_NAME=$(echo "$APP_NAME" | tr '[:upper:]' '[:lower:]' | tr -d ' _')
+#
+#        # Construct valid package name
+#        # PACKAGE_NAME="com.${CLEANED_ORG_NAME}.${CLEANED_APP_NAME}"
+#        # Prefer PKG_NAME if available
+#        if [ -n "$PKG_NAME" ]; then
+#        PACKAGE_NAME="$PKG_NAME"
+#        else
+#          PACKAGE_NAME="${CLEANED_ORG_NAME}.${CLEANED_APP_NAME}"
+#        fi
+#
+#        # Validate package name format
+#        if [[ ! "$PACKAGE_NAME" =~ ^[a-zA-Z_][a-zA-Z0-9]*(\.[a-zA-Z_][a-zA-Z0-9]*)+$ ]]; then
+#          echo "❌ ERROR: Invalid package name: $PACKAGE_NAME"
+#          exit 1
+#        fi
+#
+#        echo "✔ Package name: $PACKAGE_NAME"
+#
+#        flutter pub run rename setBundleId  --value "$PACKAGE_NAME"
+#
+#        # Update AndroidManifest.xml
+#        sed -i "s/package=\"[^\"]*\"/package=\"$PACKAGE_NAME\"/g" android/app/src/main/AndroidManifest.xml
+#        #sed -i '' "s/package=\"[^\"]*\"/package=\"$PACKAGE_NAME\"/g" android/app/src/main/AndroidManifest.xml
+#
+#        # Update applicationId in build.gradle
+#        sed -i "s/applicationId \"[^\"]*\"/applicationId \"$PACKAGE_NAME\"/g" android/app/build.gradle
+#        #sed -i '' "s/applicationId \"[^\"]*\"/applicationId \"$PACKAGE_NAME\"/g" android/app/build.gradle
+#
+#        echo "✔ Package name updated to: $PACKAGE_NAME"
 
     - &update_android_package
       name: Update Android Package Name
       script: |
         echo "Updating Android package name..."
-
-        # Convert ORG_NAME and APP_NAME to lowercase and remove spaces/underscores
-        CLEANED_ORG_NAME=$(echo "$ORG_NAME" | tr '[:upper:]' '[:lower:]' | tr -d ' _')
-        CLEANED_APP_NAME=$(echo "$APP_NAME" | tr '[:upper:]' '[:lower:]' | tr -d ' _')
-
-        # Construct valid package name
-        # PACKAGE_NAME="com.${CLEANED_ORG_NAME}.${CLEANED_APP_NAME}"
-        # Prefer PKG_NAME if available
-        if [ -n "$PKG_NAME" ]; then
-        PACKAGE_NAME="$PKG_NAME"
-        else
-          PACKAGE_NAME="${CLEANED_ORG_NAME}.${CLEANED_APP_NAME}"
-        fi
-
+      
         # Validate package name format
-        if [[ ! "$PACKAGE_NAME" =~ ^[a-zA-Z_][a-zA-Z0-9]*(\.[a-zA-Z_][a-zA-Z0-9]*)+$ ]]; then
-          echo "❌ ERROR: Invalid package name: $PACKAGE_NAME"
+        if [[ ! "$PKG_NAME" =~ ^[a-zA-Z_][a-zA-Z0-9]*(\.[a-zA-Z_][a-zA-Z0-9]*)+$ ]]; then
+          echo "❌ ERROR: Invalid package name: $PKG_NAME"
           exit 1
         fi
 
-        echo "✔ Package name: $PACKAGE_NAME"
+        echo "✔ Package name: $PKG_NAME"
 
-        flutter pub run rename setBundleId  --value "$PACKAGE_NAME"
+        flutter pub run rename setBundleId  --value "$PKG_NAME"
 
         # Update AndroidManifest.xml
-        sed -i '' "s/package=\"[^\"]*\"/package=\"$PACKAGE_NAME\"/g" android/app/src/main/AndroidManifest.xml
+        sed -i "s/package=\"[^\"]*\"/package=\"$PKG_NAME\"/g" android/app/src/main/AndroidManifest.xml
+        #sed -i '' "s/package=\"[^\"]*\"/package=\"$PKG_NAME\"/g" android/app/src/main/AndroidManifest.xml
 
         # Update applicationId in build.gradle
-        sed -i '' "s/applicationId \"[^\"]*\"/applicationId \"$PACKAGE_NAME\"/g" android/app/build.gradle
+        sed -i "s/applicationId \"[^\"]*\"/applicationId \"$PKG_NAME\"/g" android/app/build.gradle
+        #sed -i '' "s/applicationId \"[^\"]*\"/applicationId \"$PKG_NAME\"/g" android/app/build.gradle
 
-        echo "✔ Package name updated to: $PACKAGE_NAME"
+        echo "✔ Package name updated to: $PKG_NAME"
 
-
+    - &build_app
+      name: Building App with Feature Flags
+      script: |
+        echo "✅ Start Building APK...."
+        flutter clean
+        flutter pub get
+        flutter build apk --release \
+            --dart-define=WEB_URL="$WEB_URL" \
+            --dart-define=PUSH_NOTIFY="$PUSH_NOTIFY" \
+            --dart-define=PKG_NAME="$PKG_NAME" \
+            --dart-define=IS_SPLASH="$IS_SPLASH" \
+            --dart-define=SPLASH="$SPLASH" \
+            --dart-define=SPLASH_BG="$SPLASH_BG" \
+            --dart-define=SPLASH_ANIMATION="$SPLASH_ANIMATION" \
+            --dart-define=SPLASH_BG_COLOR="$SPLASH_BG_COLOR" \
+            --dart-define=SPLASH_TAGLINE="$SPLASH_TAGLINE" \
+            --dart-define=SPLASH_TAGLINE_COLOR="$SPLASH_TAGLINE_COLOR" \
+            --dart-define=SPLASH_DURATION="$SPLASH_DURATION" \
+            --dart-define=IS_PULLDOWN="$IS_PULLDOWN" \
+            --dart-define=IS_BOTTOMMENU="$IS_BOTTOMMENU" \
+            --dart-define=BOTTOMMENU_ITEMS="$BOTTOMMENU_ITEMS" \
+            --dart-define=BOTTOMMENU_BG_COLOR="$BOTTOMMENU_BG_COLOR" \
+            --dart-define=BOTTOMMENU_ICON_COLOR="$BOTTOMMENU_ICON_COLOR" \
+            --dart-define=BOTTOMMENU_TEXT_COLOR="$BOTTOMMENU_TEXT_COLOR" \
+            --dart-define=BOTTOMMENU_ACTIVE_TAB_COLOR="$BOTTOMMENU_ACTIVE_TAB_COLOR" \
+            --dart-define=BOTTOMMENU_ICON_POSITION="$BOTTOMMENU_ICON_POSITION" \
+            --dart-define=BOTTOMMENU_VISIBLE_ON="$BOTTOMMENU_VISIBLE_ON" \
+            --dart-define=IS_CAMERA="$IS_CAMERA" \
+            --dart-define=IS_LOCATION="$IS_LOCATION" \
+            --dart-define=IS_BIOMETRIC="$IS_BIOMETRIC" \
+            --dart-define=IS_MIC="$IS_MIC" \
+            --dart-define=IS_CONTACT="$IS_CONTACT" \
+            --dart-define=IS_CALENDAR="$IS_CALENDAR" \
+            --dart-define=IS_NOTIFICATION="$IS_NOTIFICATION" \
+            --dart-define=IS_STORAGE="$IS_STORAGE" > flutter_build.log
+            echo "✅ Build APK Compleated...."
+        
+        
+            echo "✅ Start Building appbundle...."
+            flutter build appbundle --release \
+            --dart-define=WEB_URL="$WEB_URL" \
+            --dart-define=PUSH_NOTIFY="$PUSH_NOTIFY" \
+            --dart-define=PKG_NAME="$PKG_NAME" \
+            --dart-define=IS_SPLASH="$IS_SPLASH" \
+            --dart-define=SPLASH="$SPLASH" \
+            --dart-define=SPLASH_BG="$SPLASH_BG" \
+            --dart-define=SPLASH_ANIMATION="$SPLASH_ANIMATION" \
+            --dart-define=SPLASH_BG_COLOR="$SPLASH_BG_COLOR" \
+            --dart-define=SPLASH_TAGLINE="$SPLASH_TAGLINE" \
+            --dart-define=SPLASH_TAGLINE_COLOR="$SPLASH_TAGLINE_COLOR" \
+            --dart-define=SPLASH_DURATION="$SPLASH_DURATION" \
+            --dart-define=IS_PULLDOWN="$IS_PULLDOWN" \
+            --dart-define=IS_BOTTOMMENU="$IS_BOTTOMMENU" \
+            --dart-define=BOTTOMMENU_ITEMS="$BOTTOMMENU_ITEMS" \
+            --dart-define=BOTTOMMENU_BG_COLOR="$BOTTOMMENU_BG_COLOR" \
+            --dart-define=BOTTOMMENU_ICON_COLOR="$BOTTOMMENU_ICON_COLOR" \
+            --dart-define=BOTTOMMENU_TEXT_COLOR="$BOTTOMMENU_TEXT_COLOR" \
+            --dart-define=BOTTOMMENU_ACTIVE_TAB_COLOR="$BOTTOMMENU_ACTIVE_TAB_COLOR" \
+            --dart-define=BOTTOMMENU_ICON_POSITION="$BOTTOMMENU_ICON_POSITION" \
+            --dart-define=BOTTOMMENU_VISIBLE_ON="$BOTTOMMENU_VISIBLE_ON" \
+            --dart-define=IS_CAMERA="$IS_CAMERA" \
+            --dart-define=IS_LOCATION="$IS_LOCATION" \
+            --dart-define=IS_BIOMETRIC="$IS_BIOMETRIC" \
+            --dart-define=IS_MIC="$IS_MIC" \
+            --dart-define=IS_CONTACT="$IS_CONTACT" \
+            --dart-define=IS_CALENDAR="$IS_CALENDAR" \
+            --dart-define=IS_NOTIFICATION="$IS_NOTIFICATION" \
+            --dart-define=IS_STORAGE="$IS_STORAGE" > flutter_build2.log
+            echo "✅ Build appbundle Compleated...."
 
 workflows:
   android-workflow:
@@ -561,6 +406,7 @@ workflows:
       # - *build_debug_apk
     artifacts:
       - *android_apk
+      - *android_abb
       - *ios_app
       - flutter_build.log
       - flutter_build2.log
