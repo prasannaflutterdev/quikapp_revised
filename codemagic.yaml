@@ -50,6 +50,35 @@ definitions:
         BOTTOMMENU_ACTIVE_TAB_COLOR: $BOTTOMMENU_ACTIVE_TAB_COLOR
         BOTTOMMENU_ICON_POSITION: $BOTTOMMENU_ICON_POSITION
         BOTTOMMENU_VISIBLE_ON: $BOTTOMMENU_VISIBLE_ON
+        flutter_build_flags: &flutter_build_flags |
+          --dart-define=WEB_URL="$WEB_URL" \
+          --dart-define=PUSH_NOTIFY="$PUSH_NOTIFY" \
+          --dart-define=PKG_NAME="$PKG_NAME" \
+          --dart-define=IS_SPLASH="$IS_SPLASH" \
+          --dart-define=SPLASH="$SPLASH" \
+          --dart-define=SPLASH_BG="$SPLASH_BG" \
+          --dart-define=SPLASH_ANIMATION="$SPLASH_ANIMATION" \
+          --dart-define=SPLASH_BG_COLOR="$SPLASH_BG_COLOR" \
+          --dart-define=SPLASH_TAGLINE="$SPLASH_TAGLINE" \
+          --dart-define=SPLASH_TAGLINE_COLOR="$SPLASH_TAGLINE_COLOR" \
+          --dart-define=SPLASH_DURATION="$SPLASH_DURATION" \
+          --dart-define=IS_PULLDOWN="$IS_PULLDOWN" \
+          --dart-define=IS_BOTTOMMENU="$IS_BOTTOMMENU" \
+          --dart-define=BOTTOMMENU_ITEMS="$BOTTOMMENU_ITEMS" \
+          --dart-define=BOTTOMMENU_BG_COLOR="$BOTTOMMENU_BG_COLOR" \
+          --dart-define=BOTTOMMENU_ICON_COLOR="$BOTTOMMENU_ICON_COLOR" \
+          --dart-define=BOTTOMMENU_TEXT_COLOR="$BOTTOMMENU_TEXT_COLOR" \
+          --dart-define=BOTTOMMENU_ACTIVE_TAB_COLOR="$BOTTOMMENU_ACTIVE_TAB_COLOR" \
+          --dart-define=BOTTOMMENU_ICON_POSITION="$BOTTOMMENU_ICON_POSITION" \
+          --dart-define=BOTTOMMENU_VISIBLE_ON="$BOTTOMMENU_VISIBLE_ON" \
+          --dart-define=IS_CAMERA="$IS_CAMERA" \
+          --dart-define=IS_LOCATION="$IS_LOCATION" \
+          --dart-define=IS_BIOMETRIC="$IS_BIOMETRIC" \
+          --dart-define=IS_MIC="$IS_MIC" \
+          --dart-define=IS_CONTACT="$IS_CONTACT" \
+          --dart-define=IS_CALENDAR="$IS_CALENDAR" \
+          --dart-define=IS_NOTIFICATION="$IS_NOTIFICATION" \
+          --dart-define=IS_STORAGE="$IS_STORAGE"
 
   artifacts:
     #- &ipa_file build/ios/ipa/*.ipa
@@ -539,110 +568,20 @@ definitions:
     - &build_ipa
       name: Building iOS App with Feature Flags
       script: |
-          echo "✅ Starting IPA build..."
-          
-          flutter build ipa --release \
-            --dart-define=WEB_URL="$WEB_URL" \
-            --dart-define=PUSH_NOTIFY="$PUSH_NOTIFY" \
-            --dart-define=PKG_NAME="$PKG_NAME" \
-            --dart-define=IS_SPLASH="$IS_SPLASH" \
-            --dart-define=SPLASH="$SPLASH" \
-            --dart-define=SPLASH_BG="$SPLASH_BG" \
-            --dart-define=SPLASH_ANIMATION="$SPLASH_ANIMATION" \
-            --dart-define=SPLASH_BG_COLOR="$SPLASH_BG_COLOR" \
-            --dart-define=SPLASH_TAGLINE="$SPLASH_TAGLINE" \
-            --dart-define=SPLASH_TAGLINE_COLOR="$SPLASH_TAGLINE_COLOR" \
-            --dart-define=SPLASH_DURATION="$SPLASH_DURATION" \
-            --dart-define=IS_PULLDOWN="$IS_PULLDOWN" \
-            --dart-define=IS_BOTTOMMENU="$IS_BOTTOMMENU" \
-            --dart-define=BOTTOMMENU_ITEMS="$BOTTOMMENU_ITEMS" \
-            --dart-define=BOTTOMMENU_BG_COLOR="$BOTTOMMENU_BG_COLOR" \
-            --dart-define=BOTTOMMENU_ICON_COLOR="$BOTTOMMENU_ICON_COLOR" \
-            --dart-define=BOTTOMMENU_TEXT_COLOR="$BOTTOMMENU_TEXT_COLOR" \
-            --dart-define=BOTTOMMENU_ACTIVE_TAB_COLOR="$BOTTOMMENU_ACTIVE_TAB_COLOR" \
-            --dart-define=BOTTOMMENU_ICON_POSITION="$BOTTOMMENU_ICON_POSITION" \
-            --dart-define=BOTTOMMENU_VISIBLE_ON="$BOTTOMMENU_VISIBLE_ON" \
-            --dart-define=IS_CAMERA="$IS_CAMERA" \
-            --dart-define=IS_LOCATION="$IS_LOCATION" \
-            --dart-define=IS_BIOMETRIC="$IS_BIOMETRIC" \
-            --dart-define=IS_MIC="$IS_MIC" \
-            --dart-define=IS_CONTACT="$IS_CONTACT" \
-            --dart-define=IS_CALENDAR="$IS_CALENDAR" \
-            --dart-define=IS_NOTIFICATION="$IS_NOTIFICATION" \
-            --dart-define=IS_STORAGE="$IS_STORAGE" \
-            > flutter_build.log
-          
-          echo "✅ IPA build completed."
+        echo "✅ Building iOS IPA..."
+        flutter build ipa --release <<: *flutter_build_flags > flutter_build.log
+        echo "✅ IPA build completed."
 
     - &build_app
       name: Building App with Feature Flags
       script: |
-        echo "✅ Start Building APK...."
-        #flutter clean
-        #flutter pub get
-        flutter build apk --release \
-            --dart-define=WEB_URL="$WEB_URL" \
-            --dart-define=PUSH_NOTIFY="$PUSH_NOTIFY" \
-            --dart-define=PKG_NAME="$PKG_NAME" \
-            --dart-define=IS_SPLASH="$IS_SPLASH" \
-            --dart-define=SPLASH="$SPLASH" \
-            --dart-define=SPLASH_BG="$SPLASH_BG" \
-            --dart-define=SPLASH_ANIMATION="$SPLASH_ANIMATION" \
-            --dart-define=SPLASH_BG_COLOR="$SPLASH_BG_COLOR" \
-            --dart-define=SPLASH_TAGLINE="$SPLASH_TAGLINE" \
-            --dart-define=SPLASH_TAGLINE_COLOR="$SPLASH_TAGLINE_COLOR" \
-            --dart-define=SPLASH_DURATION="$SPLASH_DURATION" \
-            --dart-define=IS_PULLDOWN="$IS_PULLDOWN" \
-            --dart-define=IS_BOTTOMMENU="$IS_BOTTOMMENU" \
-            --dart-define=BOTTOMMENU_ITEMS="$BOTTOMMENU_ITEMS" \
-            --dart-define=BOTTOMMENU_BG_COLOR="$BOTTOMMENU_BG_COLOR" \
-            --dart-define=BOTTOMMENU_ICON_COLOR="$BOTTOMMENU_ICON_COLOR" \
-            --dart-define=BOTTOMMENU_TEXT_COLOR="$BOTTOMMENU_TEXT_COLOR" \
-            --dart-define=BOTTOMMENU_ACTIVE_TAB_COLOR="$BOTTOMMENU_ACTIVE_TAB_COLOR" \
-            --dart-define=BOTTOMMENU_ICON_POSITION="$BOTTOMMENU_ICON_POSITION" \
-            --dart-define=BOTTOMMENU_VISIBLE_ON="$BOTTOMMENU_VISIBLE_ON" \
-            --dart-define=IS_CAMERA="$IS_CAMERA" \
-            --dart-define=IS_LOCATION="$IS_LOCATION" \
-            --dart-define=IS_BIOMETRIC="$IS_BIOMETRIC" \
-            --dart-define=IS_MIC="$IS_MIC" \
-            --dart-define=IS_CONTACT="$IS_CONTACT" \
-            --dart-define=IS_CALENDAR="$IS_CALENDAR" \
-            --dart-define=IS_NOTIFICATION="$IS_NOTIFICATION" \
-            --dart-define=IS_STORAGE="$IS_STORAGE" > flutter_build.log
-            echo "✅ Build APK Compleated...."
-        
-        
-            echo "✅ Start Building appbundle...."
-            flutter build appbundle --release \
-            --dart-define=WEB_URL="$WEB_URL" \
-            --dart-define=PUSH_NOTIFY="$PUSH_NOTIFY" \
-            --dart-define=PKG_NAME="$PKG_NAME" \
-            --dart-define=IS_SPLASH="$IS_SPLASH" \
-            --dart-define=SPLASH="$SPLASH" \
-            --dart-define=SPLASH_BG="$SPLASH_BG" \
-            --dart-define=SPLASH_ANIMATION="$SPLASH_ANIMATION" \
-            --dart-define=SPLASH_BG_COLOR="$SPLASH_BG_COLOR" \
-            --dart-define=SPLASH_TAGLINE="$SPLASH_TAGLINE" \
-            --dart-define=SPLASH_TAGLINE_COLOR="$SPLASH_TAGLINE_COLOR" \
-            --dart-define=SPLASH_DURATION="$SPLASH_DURATION" \
-            --dart-define=IS_PULLDOWN="$IS_PULLDOWN" \
-            --dart-define=IS_BOTTOMMENU="$IS_BOTTOMMENU" \
-            --dart-define=BOTTOMMENU_ITEMS="$BOTTOMMENU_ITEMS" \
-            --dart-define=BOTTOMMENU_BG_COLOR="$BOTTOMMENU_BG_COLOR" \
-            --dart-define=BOTTOMMENU_ICON_COLOR="$BOTTOMMENU_ICON_COLOR" \
-            --dart-define=BOTTOMMENU_TEXT_COLOR="$BOTTOMMENU_TEXT_COLOR" \
-            --dart-define=BOTTOMMENU_ACTIVE_TAB_COLOR="$BOTTOMMENU_ACTIVE_TAB_COLOR" \
-            --dart-define=BOTTOMMENU_ICON_POSITION="$BOTTOMMENU_ICON_POSITION" \
-            --dart-define=BOTTOMMENU_VISIBLE_ON="$BOTTOMMENU_VISIBLE_ON" \
-            --dart-define=IS_CAMERA="$IS_CAMERA" \
-            --dart-define=IS_LOCATION="$IS_LOCATION" \
-            --dart-define=IS_BIOMETRIC="$IS_BIOMETRIC" \
-            --dart-define=IS_MIC="$IS_MIC" \
-            --dart-define=IS_CONTACT="$IS_CONTACT" \
-            --dart-define=IS_CALENDAR="$IS_CALENDAR" \
-            --dart-define=IS_NOTIFICATION="$IS_NOTIFICATION" \
-            --dart-define=IS_STORAGE="$IS_STORAGE" > flutter_build2.log
-            echo "✅ Build appbundle Compleated...."
+        echo "✅ Building APK..."
+        flutter build apk --release <<: *flutter_build_flags > flutter_build.log
+        echo "✅ APK build completed."
+
+        echo "✅ Building AppBundle..."
+        flutter build appbundle --release <<: *flutter_build_flags > flutter_build2.log
+        echo "✅ AppBundle build completed."
 
     - &Enable_Admob: echo "Enabling Admob"
     - &Enable_GoogleAnalytics: echo "Enabling Google Analytics"
