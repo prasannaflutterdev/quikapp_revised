@@ -50,34 +50,34 @@ definitions:
         BOTTOMMENU_ACTIVE_TAB_COLOR: $BOTTOMMENU_ACTIVE_TAB_COLOR
         BOTTOMMENU_ICON_POSITION: $BOTTOMMENU_ICON_POSITION
         BOTTOMMENU_VISIBLE_ON: $BOTTOMMENU_VISIBLE_ON
-        flutter_build_flags: &flutter_build_flags |
-          --dart-define=WEB_URL="$WEB_URL" \
-          --dart-define=PUSH_NOTIFY="$PUSH_NOTIFY" \
-          --dart-define=PKG_NAME="$PKG_NAME" \
-          --dart-define=IS_SPLASH="$IS_SPLASH" \
-          --dart-define=SPLASH="$SPLASH" \
-          --dart-define=SPLASH_BG="$SPLASH_BG" \
-          --dart-define=SPLASH_ANIMATION="$SPLASH_ANIMATION" \
-          --dart-define=SPLASH_BG_COLOR="$SPLASH_BG_COLOR" \
-          --dart-define=SPLASH_TAGLINE="$SPLASH_TAGLINE" \
-          --dart-define=SPLASH_TAGLINE_COLOR="$SPLASH_TAGLINE_COLOR" \
-          --dart-define=SPLASH_DURATION="$SPLASH_DURATION" \
-          --dart-define=IS_PULLDOWN="$IS_PULLDOWN" \
-          --dart-define=IS_BOTTOMMENU="$IS_BOTTOMMENU" \
-          --dart-define=BOTTOMMENU_ITEMS="$BOTTOMMENU_ITEMS" \
-          --dart-define=BOTTOMMENU_BG_COLOR="$BOTTOMMENU_BG_COLOR" \
-          --dart-define=BOTTOMMENU_ICON_COLOR="$BOTTOMMENU_ICON_COLOR" \
-          --dart-define=BOTTOMMENU_TEXT_COLOR="$BOTTOMMENU_TEXT_COLOR" \
-          --dart-define=BOTTOMMENU_ACTIVE_TAB_COLOR="$BOTTOMMENU_ACTIVE_TAB_COLOR" \
-          --dart-define=BOTTOMMENU_ICON_POSITION="$BOTTOMMENU_ICON_POSITION" \
-          --dart-define=BOTTOMMENU_VISIBLE_ON="$BOTTOMMENU_VISIBLE_ON" \
-          --dart-define=IS_CAMERA="$IS_CAMERA" \
-          --dart-define=IS_LOCATION="$IS_LOCATION" \
-          --dart-define=IS_BIOMETRIC="$IS_BIOMETRIC" \
-          --dart-define=IS_MIC="$IS_MIC" \
-          --dart-define=IS_CONTACT="$IS_CONTACT" \
-          --dart-define=IS_CALENDAR="$IS_CALENDAR" \
-          --dart-define=IS_NOTIFICATION="$IS_NOTIFICATION" \
+        flutter_build_flags: >
+          --dart-define=WEB_URL="$WEB_URL"
+          --dart-define=PUSH_NOTIFY="$PUSH_NOTIFY"
+          --dart-define=PKG_NAME="$PKG_NAME"
+          --dart-define=IS_SPLASH="$IS_SPLASH"
+          --dart-define=SPLASH="$SPLASH"
+          --dart-define=SPLASH_BG="$SPLASH_BG"
+          --dart-define=SPLASH_ANIMATION="$SPLASH_ANIMATION"
+          --dart-define=SPLASH_BG_COLOR="$SPLASH_BG_COLOR"
+          --dart-define=SPLASH_TAGLINE="$SPLASH_TAGLINE"
+          --dart-define=SPLASH_TAGLINE_COLOR="$SPLASH_TAGLINE_COLOR"
+          --dart-define=SPLASH_DURATION="$SPLASH_DURATION"
+          --dart-define=IS_PULLDOWN="$IS_PULLDOWN"
+          --dart-define=IS_BOTTOMMENU="$IS_BOTTOMMENU"
+          --dart-define=BOTTOMMENU_ITEMS="$BOTTOMMENU_ITEMS"
+          --dart-define=BOTTOMMENU_BG_COLOR="$BOTTOMMENU_BG_COLOR"
+          --dart-define=BOTTOMMENU_ICON_COLOR="$BOTTOMMENU_ICON_COLOR"
+          --dart-define=BOTTOMMENU_TEXT_COLOR="$BOTTOMMENU_TEXT_COLOR"
+          --dart-define=BOTTOMMENU_ACTIVE_TAB_COLOR="$BOTTOMMENU_ACTIVE_TAB_COLOR"
+          --dart-define=BOTTOMMENU_ICON_POSITION="$BOTTOMMENU_ICON_POSITION"
+          --dart-define=BOTTOMMENU_VISIBLE_ON="$BOTTOMMENU_VISIBLE_ON"
+          --dart-define=IS_CAMERA="$IS_CAMERA"
+          --dart-define=IS_LOCATION="$IS_LOCATION"
+          --dart-define=IS_BIOMETRIC="$IS_BIOMETRIC"
+          --dart-define=IS_MIC="$IS_MIC"
+          --dart-define=IS_CONTACT="$IS_CONTACT"
+          --dart-define=IS_CALENDAR="$IS_CALENDAR"
+          --dart-define=IS_NOTIFICATION="$IS_NOTIFICATION"
           --dart-define=IS_STORAGE="$IS_STORAGE"
 
   artifacts:
@@ -95,7 +95,6 @@ definitions:
     email:
       recipients:
         - $EMAIL_ID
-        # - thamaraikannan137@gmail.com
       notify:
         success: true
         failure: true
@@ -186,43 +185,7 @@ definitions:
           else
           echo "⏭️ Skipping splash asset download (IS_SPLASH != true)"
           fi
-    - &Inject_Firebase_ios
-      name: Setup Firebase SDK and Config (iOS only)
-      script: |
-        if [ "$PUSH_NOTIFY" = "true" ]; then
-        echo "✅ Enabling Firebase for iOS..."
-        
-        # Download GoogleService-Info.plist (NOT google-services.json for iOS)
-        if [ -n "$firebase_config_ios" ]; then
-        wget -O firebase/ios/GoogleService-Info.plist "$firebase_config_ios"
-        fi
-        
-        # Copy pre-configured Firebase SPM Package.resolved
-        if [ -f "firebase/ios/Package.resolved" ]; then
-        mkdir -p ios/Runner.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/
-        cp firebase/ios/Package.resolved ios/Runner.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
-        echo "📦 Firebase SDK will be resolved from committed Package.resolved."
-        else
-        echo "⚠️ Package.resolved not found. Firebase SDK must be added manually via Xcode."
-        exit 1
-        fi
-        
-        # Copy GoogleService-Info.plist into Xcode project
-        if [ -f "firebase/ios/GoogleService-Info.plist" ]; then
-        cp firebase/ios/GoogleService-Info.plist ios/Runner/GoogleService-Info.plist
-        echo "✅ GoogleService-Info.plist copied."
-        else
-        echo "❌ GoogleService-Info.plist is missing. Firebase setup will fail."
-        exit 1
-        fi
-        else
-        echo "🚫 Firebase is disabled. Skipping iOS Firebase SDK and config."
-        
-        # Clean up any previously added Firebase files
-        rm -f ios/Runner/GoogleService-Info.plist
-        rm -f ios/Runner.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
-        echo "🧹 Cleaned up Firebase iOS config."
-        fi
+    
 
     - &Inject_Firebase_iOS_Push
       name: Firebase Push Notification Setup for iOS
@@ -297,36 +260,7 @@ definitions:
         else
           echo "🚫 Firebase config skipped (PUSH_NOTIFY is not true)"
         fi
-#    - &Inject_Firebase
-#      name: Inject Firebase and buildscript block
-#      script: |
-#        if [ "$PUSH_NOTIFY" = "true" ]; then
-#            echo "📦 Enabling Firebase integration..."
-#
-#            # Inject Firebase classpath only if not present
-#            if ! grep -q "com.google.gms:google-services" android/build.gradle; then
-#            echo "✅ Injecting Firebase classpath into android/build.gradle..."
-#
-#            if ! grep -q "buildscript {" android/build.gradle; then
-#              # No buildscript block at all – add it to the top
-#              sed -i '1s;^;buildscript {\n  repositories {\n    google()\n    mavenCentral()\n  }\n  dependencies {\n    classpath "com.google.gms:google-services:4.3.15"\n  }\n}\n\n;' android/build.gradle
-#              echo "✅ Full buildscript block injected"
-#            else
-#              # buildscript exists, just insert classpath line
-#              sed -i '/buildscript {/,/}/ s/dependencies {/dependencies {\n    classpath "com.google.gms:google-services:4.3.15"/' android/build.gradle
-#              echo "✅ Firebase classpath inserted into existing buildscript"
-#            fi
-#          fi
-#
-#            if ! grep -q "com.google.gms:google-services" android/build.gradle; then
-#              sed -i '/dependencies {/a\
-#              classpath '\''com.google.gms:google-services:4.3.15'\''\
-#              ' android/build.gradle
-#              echo "✅ Firebase classpath added to android/build.gradle"
-#            fi
-#               else
-#            echo "🚫 Firebase config skipped (PUSH_NOTIFY is not true)"
-#          fi
+
     - &get_json
       name: Get JSON file
       script: |
@@ -369,33 +303,7 @@ definitions:
           else
             echo "🚫 SDK version update skipped (PUSH_NOTIFY is not true)"
           fi
-    - &update_sdkver
-      name: Updating SDK version
-      script: |
-        if [ "$PUSH_NOTIFY" = "true" ]; then
-          echo "🔧 Updating minSdkVersion and targetSdkVersion..."
 
-          # Make sure to handle in-place edit properly for both macOS and Linux
-          sed -i.bak 's/minSdkVersion\s*=.*$/minSdkVersion 21/' android/app/build.gradle
-          sed -i.bak 's/targetSdkVersion\s*=.*$/targetSdkVersion 34/' android/app/build.gradle
-
-          echo "✅ SDK versions updated"
-        else
-          echo "🚫 Firebase config skipped (PUSH_NOTIFY is not true)"
-        fi
-    - &update_appversion
-      name: Inject version info into build.gradle (fallback)
-      script: |
-        echo "🔄 Updating pubspec.yaml version to ${VERSION_NAME}+${VERSION_CODE}"
-        sed -i'' -e "s/^version: .*/version: ${VERSION_NAME}+${VERSION_CODE}/" pubspec.yaml
-        
-        echo "🔍 Injecting versionCode: ${VERSION_CODE} into build.gradle"
-          sed -i'' -e "s/versionCode.*/versionCode ${VERSION_CODE}/" android/app/build.gradle
-        
-        echo "🔍 Injecting versionName: ${VERSION_NAME} into build.gradle"
-          sed -i'' -e "s/versionName \".*\"/versionName \"${VERSION_NAME}\"/" android/app/build.gradle
-        
-        echo "✅ Version update complete: $VERSION_NAME ($VERSION_CODE)"
     - &Update_App_Version
       name: Inject Version Info into pubspec, build.gradle (Android) & Xcode project (iOS)
       script: |
@@ -466,121 +374,58 @@ definitions:
         keyPassword=$CM_KEY_PASSWORD
         EOF
 
-#    - &update_android_package
-#      name: Update Android Package Name
-#      script: |
-#        echo "Updating Android package name..."
-#
-#        # Convert ORG_NAME and APP_NAME to lowercase and remove spaces/underscores
-#        CLEANED_ORG_NAME=$(echo "$ORG_NAME" | tr '[:upper:]' '[:lower:]' | tr -d ' _')
-#        CLEANED_APP_NAME=$(echo "$APP_NAME" | tr '[:upper:]' '[:lower:]' | tr -d ' _')
-#
-#        # Construct valid package name
-#        # PACKAGE_NAME="com.${CLEANED_ORG_NAME}.${CLEANED_APP_NAME}"
-#        # Prefer PKG_NAME if available
-#        if [ -n "$PKG_NAME" ]; then
-#        PACKAGE_NAME="$PKG_NAME"
-#        else
-#          PACKAGE_NAME="${CLEANED_ORG_NAME}.${CLEANED_APP_NAME}"
-#        fi
-#
-#        # Validate package name format
-#        if [[ ! "$PACKAGE_NAME" =~ ^[a-zA-Z_][a-zA-Z0-9]*(\.[a-zA-Z_][a-zA-Z0-9]*)+$ ]]; then
-#          echo "❌ ERROR: Invalid package name: $PACKAGE_NAME"
-#          exit 1
-#        fi
-#
-#        echo "✔ Package name: $PACKAGE_NAME"
-#
-#        flutter pub run rename setBundleId  --value "$PACKAGE_NAME"
-#
-#        # Update AndroidManifest.xml
-#        sed -i "s/package=\"[^\"]*\"/package=\"$PACKAGE_NAME\"/g" android/app/src/main/AndroidManifest.xml
-#        #sed -i '' "s/package=\"[^\"]*\"/package=\"$PACKAGE_NAME\"/g" android/app/src/main/AndroidManifest.xml
-#
-#        # Update applicationId in build.gradle
-#        sed -i "s/applicationId \"[^\"]*\"/applicationId \"$PACKAGE_NAME\"/g" android/app/build.gradle
-#        #sed -i '' "s/applicationId \"[^\"]*\"/applicationId \"$PACKAGE_NAME\"/g" android/app/build.gradle
-#
-#        echo "✔ Package name updated to: $PACKAGE_NAME"
-
-    - &update_android_package
-      name: Update Android Package Name
-      script: |
-        echo "Updating Android package name..."
-      
-        # Validate package name format
-        if [[ ! "$PKG_NAME" =~ ^[a-zA-Z_][a-zA-Z0-9]*(\.[a-zA-Z_][a-zA-Z0-9]*)+$ ]]; then
-          echo "❌ ERROR: Invalid package name: $PKG_NAME"
-          exit 1
-        fi
-
-        echo "✔ Package name: $PKG_NAME"
-
-        flutter pub run rename setBundleId  --value "$PKG_NAME"
-
-        # Update AndroidManifest.xml
-        sed -i "s/package=\"[^\"]*\"/package=\"$PKG_NAME\"/g" android/app/src/main/AndroidManifest.xml
-        #sed -i '' "s/package=\"[^\"]*\"/package=\"$PKG_NAME\"/g" android/app/src/main/AndroidManifest.xml
-
-        # Update applicationId in build.gradle
-        sed -i "s/applicationId \"[^\"]*\"/applicationId \"$PKG_NAME\"/g" android/app/build.gradle
-        #sed -i '' "s/applicationId \"[^\"]*\"/applicationId \"$PKG_NAME\"/g" android/app/build.gradle
-
-        echo "✔ Package name updated to: $PKG_NAME"
-
     - &update_package_names
       name: Update Android & iOS Package Name / Bundle ID
       script: |
-                echo "🔧 Updating Android and iOS package name (bundle ID)..."
-
-                # Validate package/bundle ID format (Java-style, dot-separated)
-                if [[ ! "$PKG_NAME" =~ ^[a-zA-Z_][a-zA-Z0-9_]*(\.[a-zA-Z_][a-zA-Z0-9_]*)+$ ]]; then
-                  echo "❌ ERROR: Invalid package/bundle identifier: $PKG_NAME"
-                  exit 1
-                fi
-
-                echo "✔ Package name / Bundle ID: $PKG_NAME"
+        echo "🔧 Updating Android and iOS package name (bundle ID)..."
         
-                echo "────────────── ANDROID UPDATE ──────────────"
-                echo "📦 Updating Android package..."
-                flutter pub run rename setBundleId --value "$PKG_NAME"
-
-                # Update AndroidManifest.xml
-                sed -i "s/package=\"[^\"]*\"/package=\"$PKG_NAME\"/g" android/app/src/main/AndroidManifest.xml
-                # For macOS: sed -i '' ...
-                sed -i "s/applicationId \"[^\"]*\"/applicationId \"$PKG_NAME\"/g" android/app/build.gradle
-
-                echo "✅ Android package updated."
+        # Validate package/bundle ID format (Java-style, dot-separated)
+        if [[ ! "$PKG_NAME" =~ ^[a-zA-Z_][a-zA-Z0-9_]*(\.[a-zA-Z_][a-zA-Z0-9_]*)+$ ]]; then
+        echo "❌ ERROR: Invalid package/bundle identifier: $PKG_NAME"
+        exit 1
+        fi
         
-                echo "────────────── iOS UPDATE ──────────────"
-                echo "🍏 Updating iOS bundle identifier..."
-                IOS_PROJECT_PATH="ios/Runner.xcodeproj/project.pbxproj"
-
-                if [ -f "$IOS_PROJECT_PATH" ]; then
-                  sed -i "s/PRODUCT_BUNDLE_IDENTIFIER = .*;/PRODUCT_BUNDLE_IDENTIFIER = $PKG_NAME;/g" "$IOS_PROJECT_PATH"
-                  echo "✅ iOS bundle identifier updated."
-                else
-                  echo "❌ iOS project file not found at $IOS_PROJECT_PATH"
-                  exit 1
-                fi
+        echo "✔ Package name / Bundle ID: $PKG_NAME"
+        
+               echo "────────────── ANDROID UPDATE ──────────────"
+               echo "📦 Updating Android package..."
+               flutter pub run rename setBundleId --value "$PKG_NAME"
+        
+               # Update AndroidManifest.xml
+               sed -i "s/package=\"[^\"]*\"/package=\"$PKG_NAME\"/g" android/app/src/main/AndroidManifest.xml
+               # For macOS: sed -i '' ...
+               sed -i "s/applicationId \"[^\"]*\"/applicationId \"$PKG_NAME\"/g" android/app/build.gradle
+        
+               echo "✅ Android package updated."
+        
+               echo "────────────── iOS UPDATE ──────────────"
+               echo "🍏 Updating iOS bundle identifier..."
+               IOS_PROJECT_PATH="ios/Runner.xcodeproj/project.pbxproj"
+        
+               if [ -f "$IOS_PROJECT_PATH" ]; then
+                 sed -i "s/PRODUCT_BUNDLE_IDENTIFIER = .*;/PRODUCT_BUNDLE_IDENTIFIER = $PKG_NAME;/g" "$IOS_PROJECT_PATH"
+                 echo "✅ iOS bundle identifier updated."
+               else
+                 echo "❌ iOS project file not found at $IOS_PROJECT_PATH"
+                 exit 1
+               fi         
 
     - &build_ipa
       name: Building iOS App with Feature Flags
       script: |
         echo "✅ Building iOS IPA..."
-        flutter build ipa --release <<: *flutter_build_flags > flutter_build.log
+        flutter build ipa --release $flutter_build_flags > flutter_build.log
         echo "✅ IPA build completed."
 
     - &build_app
       name: Building App with Feature Flags
       script: |
         echo "✅ Building APK..."
-        flutter build apk --release <<: *flutter_build_flags > flutter_build.log
+        flutter build apk --release $flutter_build_flags > flutter_build.log
         echo "✅ APK build completed."
 
         echo "✅ Building AppBundle..."
-        flutter build appbundle --release <<: *flutter_build_flags > flutter_build2.log
+        flutter build appbundle --release $flutter_build_flags > flutter_build2.log
         echo "✅ AppBundle build completed."
 
     - &Enable_Admob: echo "Enabling Admob"
@@ -620,11 +465,9 @@ workflows:
     artifacts:
       - *android_apk
       - *android_abb
-#      - *ios_app
       - flutter_build.log
       - flutter_build2.log
       - fcm_token.txt
-    #        - *android_abb
     publishing: *email_release
 
   ios-workflow:
