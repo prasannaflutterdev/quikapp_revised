@@ -242,6 +242,7 @@ definitions:
           rm -f ios/Runner.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
           echo "🧹 Cleaned up Firebase iOS config."
         fi
+
     - &Inject_Firebase
       name: Inject Firebase and buildscript block
       script: |
@@ -307,7 +308,38 @@ definitions:
         else
           echo "🚫 Firebase config skipped (PUSH_NOTIFY is not true)"
         fi
-
+    - &Update_SDK_Version
+      name: Updating SDK Version for Android & iOS (Conditional)
+      script: |
+          if [ "$PUSH_NOTIFY" = "true" ]; then
+            echo "🔧 Updating Android and iOS SDK versions..."
+          
+            # ───── Android SDK Versions ─────
+            echo "📱 Updating Android minSdkVersion and targetSdkVersion in build.gradle"
+            sed -i.bak 's/minSdkVersion\s*=.*$/minSdkVersion 21/' android/app/build.gradle
+            sed -i.bak 's/targetSdkVersion\s*=.*$/targetSdkVersion 34/' android/app/build.gradle
+            echo "✅ Android SDK versions updated"
+          
+            # ───── iOS Minimum Target Version ─────
+            echo "🍏 Updating iOS minimum deployment target in Podfile..."
+            PODFILE_PATH="ios/Podfile"
+          
+            if [ -f "$PODFILE_PATH" ]; then
+              sed -i.bak -E "s/platform :ios, '[0-9.]+'/platform :ios, '12.0'/" "$PODFILE_PATH"
+              echo "✅ iOS minimum deployment target updated to 12.0"
+            else
+              echo "⚠️ Podfile not found. Skipping iOS deployment target update."
+            fi
+          
+            # Optional: iOS project.pbxproj iOS Deployment Target
+            IOS_PROJECT_FILE="ios/Runner.xcodeproj/project.pbxproj"
+            if [ -f "$IOS_PROJECT_FILE" ]; then
+              sed -i'' -e "s/IPHONEOS_DEPLOYMENT_TARGET = .*;/IPHONEOS_DEPLOYMENT_TARGET = 12.0;/" "$IOS_PROJECT_FILE"
+              echo "✅ Xcode project iOS deployment target updated to 12.0"
+            fi
+          else
+            echo "🚫 SDK version update skipped (PUSH_NOTIFY is not true)"
+          fi
     - &update_sdkver
       name: Updating SDK version
       script: |
@@ -335,7 +367,33 @@ definitions:
           sed -i'' -e "s/versionName \".*\"/versionName \"${VERSION_NAME}\"/" android/app/build.gradle
         
         echo "✅ Version update complete: $VERSION_NAME ($VERSION_CODE)"
-
+    - &Update_App_Version
+      name: Inject Version Info into pubspec, build.gradle (Android) & Xcode project (iOS)
+      script: |
+          echo "🔄 Updating version to ${VERSION_NAME}+${VERSION_CODE}"
+          
+          # ───── pubspec.yaml ─────
+          sed -i'' -e "s/^version: .*/version: ${VERSION_NAME}+${VERSION_CODE}/" pubspec.yaml
+          echo "✅ Updated pubspec.yaml"
+          
+          # ───── Android build.gradle ─────
+          echo "🔧 Updating Android build.gradle..."
+          sed -i'' -e "s/versionCode.*/versionCode ${VERSION_CODE}/" android/app/build.gradle
+          sed -i'' -e "s/versionName \".*\"/versionName \"${VERSION_NAME}\"/" android/app/build.gradle
+          echo "✅ Android version updated: $VERSION_NAME ($VERSION_CODE)"
+          
+          # ───── iOS: project.pbxproj ─────
+          echo "🍏 Updating iOS version info in project.pbxproj..."
+          IOS_PROJECT_FILE="ios/Runner.xcodeproj/project.pbxproj"
+          
+          if [ -f "$IOS_PROJECT_FILE" ]; then
+            sed -i'' -e "s/MARKETING_VERSION = .*;/MARKETING_VERSION = ${VERSION_NAME};/" "$IOS_PROJECT_FILE"
+            sed -i'' -e "s/CURRENT_PROJECT_VERSION = .*;/CURRENT_PROJECT_VERSION = ${VERSION_CODE};/" "$IOS_PROJECT_FILE"
+            echo "✅ iOS version updated: $VERSION_NAME ($VERSION_CODE)"
+          else
+            echo "❌ iOS project file not found at $IOS_PROJECT_FILE"
+            exit 1
+          fi
 
     - &get_logo
       name: Get logo image from logoUrl
@@ -441,6 +499,43 @@ definitions:
         #sed -i '' "s/applicationId \"[^\"]*\"/applicationId \"$PKG_NAME\"/g" android/app/build.gradle
 
         echo "✔ Package name updated to: $PKG_NAME"
+
+    - &update_package_names
+      name: Update Android & iOS Package Name / Bundle ID
+      script: |
+                echo "🔧 Updating Android and iOS package name (bundle ID)..."
+
+                # Validate package/bundle ID format (Java-style, dot-separated)
+                if [[ ! "$PKG_NAME" =~ ^[a-zA-Z_][a-zA-Z0-9_]*(\.[a-zA-Z_][a-zA-Z0-9_]*)+$ ]]; then
+                  echo "❌ ERROR: Invalid package/bundle identifier: $PKG_NAME"
+                  exit 1
+                fi
+
+                echo "✔ Package name / Bundle ID: $PKG_NAME"
+        
+                echo "────────────── ANDROID UPDATE ──────────────"
+                echo "📦 Updating Android package..."
+                flutter pub run rename setBundleId --value "$PKG_NAME"
+
+                # Update AndroidManifest.xml
+                sed -i "s/package=\"[^\"]*\"/package=\"$PKG_NAME\"/g" android/app/src/main/AndroidManifest.xml
+                # For macOS: sed -i '' ...
+                sed -i "s/applicationId \"[^\"]*\"/applicationId \"$PKG_NAME\"/g" android/app/build.gradle
+
+                echo "✅ Android package updated."
+        
+                echo "────────────── iOS UPDATE ──────────────"
+                echo "🍏 Updating iOS bundle identifier..."
+                IOS_PROJECT_PATH="ios/Runner.xcodeproj/project.pbxproj"
+
+                if [ -f "$IOS_PROJECT_PATH" ]; then
+                  sed -i "s/PRODUCT_BUNDLE_IDENTIFIER = .*;/PRODUCT_BUNDLE_IDENTIFIER = $PKG_NAME;/g" "$IOS_PROJECT_PATH"
+                  echo "✅ iOS bundle identifier updated."
+                else
+                  echo "❌ iOS project file not found at $IOS_PROJECT_PATH"
+                  exit 1
+                fi
+
     - &build_ipa
       name: Building iOS App with Feature Flags
       script: |
@@ -573,20 +668,20 @@ workflows:
       - *pub_get
       - *debug_env
       - *key_store
-      - *update_appversion
-      - *update_android_package
+      - *Update_App_Version
+      - *update_package_names
       - *get_logo
       - *set_launcher_icons
       - *get_splash
       - *change_app_name
       - *Inject_Firebase
       - *get_json
-      - *update_sdkver
+      - *Update_SDK_Version
       - *build_app
     artifacts:
       - *android_apk
       - *android_abb
-      - *ios_app
+#      - *ios_app
       - flutter_build.log
       - flutter_build2.log
       - fcm_token.txt
@@ -603,25 +698,20 @@ workflows:
     scripts:
       - *pub_get
       - *debug_env
-#      - *key_store
-#      - *update_appversion
-      - *update_android_package
+      - *Update_App_Version
+      - *update_package_names
       - *get_logo
       - *set_launcher_icons
       - *get_splash
       - *change_app_name
       - *Inject_Firebase_iOS_Push
-#      - *get_json
-#      - *update_sdkver
+      - *Update_SDK_Version
       - *build_ipa
     artifacts:
-      - *android_apk
-      - *android_abb
       - *ios_app
       - flutter_build.log
-      - flutter_build2.log
       - fcm_token.txt
-    #        - *android_abb
+
     publishing: *email_release
 
   free-apk-workflow:
@@ -633,13 +723,13 @@ workflows:
     scripts:
       - *pub_get
       - *debug_env
-      - *update_appversion
-      - *update_android_package
+      - *Update_App_Version
+      - *update_package_names
       - *get_logo
       - *set_launcher_icons
       - *get_splash
       - *change_app_name
-      - *update_sdkver
+      - *Update_SDK_Version
       - *build_app
     artifacts:
       - *android_apk
@@ -655,8 +745,8 @@ workflows:
       - *pub_get
       - *debug_env
       - *key_store
-      - *update_appversion
-      - *update_android_package
+      - *Update_App_Version
+      - *update_package_names
       - *get_logo
       - *set_launcher_icons
       - *get_splash
@@ -673,7 +763,7 @@ workflows:
       - *Enable_LoadingIndicators
       - *Enable_DeepLinking
       - *Enable_AdvancedPermissions  # GPS, Camera, etc.
-      - *update_sdkver
+      - *Update_SDK_Version
       - *build_app
     artifacts:
       - *android_apk
