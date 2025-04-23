@@ -26,6 +26,10 @@ definitions:
         WEB_URL: $WEB_URL
         url: $WEB_URL
         firebase_config_android: $firebase_config_android
+        firebase_config_ios: $firebase_config_ios
+        APNS_KEY_ID: $APNS_KEY_ID
+        APNS_TEAM_ID: $APNS_TEAM_ID
+        APNS_AUTH_KEY_URL: $APNS_AUTH_KEY_URL
         PKG_NAME: $PKG_NAME
         EMAIL_ID: $EMAIL_ID
         PUSH_NOTIFY: $PUSH_NOTIFY
@@ -54,7 +58,7 @@ definitions:
     # - &app $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.app
     - &android_abb build/**/outputs/**/*.aab
     - &android_apk build/**/outputs/**/*.apk
-#    - &ios_app build/ios/ipa/*.ipa
+    - &ios_app build/ios/ipa/*.ipa
     #- &android_mapping_txt build/**/outputs/**/mapping.txt
     #3- &flutter_drive_log flutter_drive.log
 
@@ -93,7 +97,11 @@ definitions:
         echo "SPLASH_TAGLINE_COLOR: $SPLASH_TAGLINE_COLOR"
         echo "SPLASH_ANIMATION: $SPLASH_ANIMATION"
         echo "SPLASH_DURATION: $SPLASH_DURATION"
+        echo "firebase_config_ios: $firebase_config_ios"
         echo "firebase_config_android: $firebase_config_android"
+        echo "APNS_KEY_ID: $APNS_KEY_ID"
+        echo "APNS_TEAM_ID: $APNS_TEAM_ID"
+        echo "APNS_AUTH_KEY_URL: $APNS_AUTH_KEY_URL"
         echo "PKG_NAME: $PKG_NAME"
         echo "EMAIL_ID: $EMAIL_ID"
         echo "PUSH_NOTIFY: $PUSH_NOTIFY"
@@ -149,7 +157,91 @@ definitions:
           else
           echo "⏭️ Skipping splash asset download (IS_SPLASH != true)"
           fi
+    - &Inject_Firebase_ios
+      name: Setup Firebase SDK and Config (iOS only)
+      script: |
+        if [ "$PUSH_NOTIFY" = "true" ]; then
+        echo "✅ Enabling Firebase for iOS..."
+        
+        # Download GoogleService-Info.plist (NOT google-services.json for iOS)
+        if [ -n "$firebase_config_ios" ]; then
+        wget -O firebase/ios/GoogleService-Info.plist "$firebase_config_ios"
+        fi
+        
+        # Copy pre-configured Firebase SPM Package.resolved
+        if [ -f "firebase/ios/Package.resolved" ]; then
+        mkdir -p ios/Runner.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/
+        cp firebase/ios/Package.resolved ios/Runner.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
+        echo "📦 Firebase SDK will be resolved from committed Package.resolved."
+        else
+        echo "⚠️ Package.resolved not found. Firebase SDK must be added manually via Xcode."
+        exit 1
+        fi
+        
+        # Copy GoogleService-Info.plist into Xcode project
+        if [ -f "firebase/ios/GoogleService-Info.plist" ]; then
+        cp firebase/ios/GoogleService-Info.plist ios/Runner/GoogleService-Info.plist
+        echo "✅ GoogleService-Info.plist copied."
+        else
+        echo "❌ GoogleService-Info.plist is missing. Firebase setup will fail."
+        exit 1
+        fi
+        else
+        echo "🚫 Firebase is disabled. Skipping iOS Firebase SDK and config."
+        
+        # Clean up any previously added Firebase files
+        rm -f ios/Runner/GoogleService-Info.plist
+        rm -f ios/Runner.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
+        echo "🧹 Cleaned up Firebase iOS config."
+        fi
 
+    - &Inject_Firebase_iOS_Push
+      name: Firebase Push Notification Setup for iOS
+      script: |
+        if [ "$PUSH_NOTIFY" = "true" ]; then
+          echo "🔔 Enabling Firebase Push Notifications for iOS..."
+        
+          # 1. Download and apply Firebase config
+          mkdir -p firebase/ios
+          if [ -n "$firebase_config_ios" ]; then
+            wget -O firebase/ios/GoogleService-Info.plist "$firebase_config_ios"
+          fi
+        
+          if [ -f "firebase/ios/GoogleService-Info.plist" ]; then
+            cp firebase/ios/GoogleService-Info.plist ios/Runner/GoogleService-Info.plist
+            echo "✅ GoogleService-Info.plist copied."
+          else
+            echo "❌ Missing GoogleService-Info.plist. Cannot proceed with Firebase setup."
+            exit 1
+          fi
+        
+          # 2. Add Firebase SDK (via committed Package.resolved)
+          if [ -f "firebase/ios/Package.resolved" ]; then
+            mkdir -p ios/Runner.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/
+            cp firebase/ios/Package.resolved ios/Runner.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
+            echo "📦 Firebase SDK resolved from committed Package.resolved."
+          else
+            echo "⚠️ Package.resolved not found. Firebase SDK must be added manually in Xcode."
+          fi
+        
+          # 3. Download APNs Auth Key if provided (Optional)
+          if [ -n "$APNS_AUTH_KEY_URL" ]; then
+            wget -O firebase/ios/AuthKey.p8 "$APNS_AUTH_KEY_URL"
+            echo "📥 Downloaded AuthKey.p8 for APNs"
+          fi
+        
+          # 4. Check APNs entitlements
+          if grep -q "aps-environment" ios/Runner/Runner.entitlements; then
+            echo "✅ APNs entitlements already enabled."
+          else
+            echo "⚠️ Warning: Missing APNs entitlement in Runner.entitlements."
+          fi
+        else
+          echo "🚫 PUSH_NOTIFY is false. Skipping Firebase push notification setup for iOS."
+          rm -f ios/Runner/GoogleService-Info.plist
+          rm -f ios/Runner.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
+          echo "🧹 Cleaned up Firebase iOS config."
+        fi
     - &Inject_Firebase
       name: Inject Firebase and buildscript block
       script: |
@@ -349,6 +441,43 @@ definitions:
         #sed -i '' "s/applicationId \"[^\"]*\"/applicationId \"$PKG_NAME\"/g" android/app/build.gradle
 
         echo "✔ Package name updated to: $PKG_NAME"
+    - &build_ipa
+      name: Building iOS App with Feature Flags
+      script: |
+          echo "✅ Starting IPA build..."
+          
+          flutter build ipa --release \
+            --dart-define=WEB_URL="$WEB_URL" \
+            --dart-define=PUSH_NOTIFY="$PUSH_NOTIFY" \
+            --dart-define=PKG_NAME="$PKG_NAME" \
+            --dart-define=IS_SPLASH="$IS_SPLASH" \
+            --dart-define=SPLASH="$SPLASH" \
+            --dart-define=SPLASH_BG="$SPLASH_BG" \
+            --dart-define=SPLASH_ANIMATION="$SPLASH_ANIMATION" \
+            --dart-define=SPLASH_BG_COLOR="$SPLASH_BG_COLOR" \
+            --dart-define=SPLASH_TAGLINE="$SPLASH_TAGLINE" \
+            --dart-define=SPLASH_TAGLINE_COLOR="$SPLASH_TAGLINE_COLOR" \
+            --dart-define=SPLASH_DURATION="$SPLASH_DURATION" \
+            --dart-define=IS_PULLDOWN="$IS_PULLDOWN" \
+            --dart-define=IS_BOTTOMMENU="$IS_BOTTOMMENU" \
+            --dart-define=BOTTOMMENU_ITEMS="$BOTTOMMENU_ITEMS" \
+            --dart-define=BOTTOMMENU_BG_COLOR="$BOTTOMMENU_BG_COLOR" \
+            --dart-define=BOTTOMMENU_ICON_COLOR="$BOTTOMMENU_ICON_COLOR" \
+            --dart-define=BOTTOMMENU_TEXT_COLOR="$BOTTOMMENU_TEXT_COLOR" \
+            --dart-define=BOTTOMMENU_ACTIVE_TAB_COLOR="$BOTTOMMENU_ACTIVE_TAB_COLOR" \
+            --dart-define=BOTTOMMENU_ICON_POSITION="$BOTTOMMENU_ICON_POSITION" \
+            --dart-define=BOTTOMMENU_VISIBLE_ON="$BOTTOMMENU_VISIBLE_ON" \
+            --dart-define=IS_CAMERA="$IS_CAMERA" \
+            --dart-define=IS_LOCATION="$IS_LOCATION" \
+            --dart-define=IS_BIOMETRIC="$IS_BIOMETRIC" \
+            --dart-define=IS_MIC="$IS_MIC" \
+            --dart-define=IS_CONTACT="$IS_CONTACT" \
+            --dart-define=IS_CALENDAR="$IS_CALENDAR" \
+            --dart-define=IS_NOTIFICATION="$IS_NOTIFICATION" \
+            --dart-define=IS_STORAGE="$IS_STORAGE" \
+            > flutter_build.log
+          
+          echo "✅ IPA build completed."
 
     - &build_app
       name: Building App with Feature Flags
@@ -420,10 +549,22 @@ definitions:
             --dart-define=IS_STORAGE="$IS_STORAGE" > flutter_build2.log
             echo "✅ Build appbundle Compleated...."
 
+    - &Enable_Admob: echo "Enabling Admob"
+    - &Enable_GoogleAnalytics: echo "Enabling Google Analytics"
+    - &Enable_AppleLogin: echo "Enabling Apple Sign-In"
+    - &Enable_GoogleLogin: echo "Enabling Google Sign-In"
+    - &Enable_2FA: echo "Enabling Two-Factor Authentication"
+    - &Enable_BottomNav: echo "Enabling Bottom Navigation"
+    - &Enable_AppScreenshot: echo "Enabling Screenshot Functionality"
+    - &Enable_PullToRefresh: echo "Enabling Pull to Refresh"
+    - &Enable_LoadingIndicators: echo "Enabling Loading Indicators"
+    - &Enable_DeepLinking: echo "Enabling Deep Linking"
+    - &Enable_AdvancedPermissions: echo "Requesting advanced permissions (GPS, Camera, etc.)"
+
 workflows:
   android-workflow:
     name: Android Workflow
-    max_build_duration: 65
+    max_build_duration: 30
     instance_type: mac_mini_m1
     environment:
       flutter: stable
@@ -437,31 +578,56 @@ workflows:
       - *get_logo
       - *set_launcher_icons
       - *get_splash
-#      - *generate_splash_config
-#      - *set_splash_icons
       - *change_app_name
       - *Inject_Firebase
-
       - *get_json
-      # - *read_json
       - *update_sdkver
       - *build_app
-      # - *build_release_apk
-      # - *build_abb
-      # - *build_debug_apk
     artifacts:
       - *android_apk
       - *android_abb
-#      - *ios_app
+      - *ios_app
       - flutter_build.log
       - flutter_build2.log
       - fcm_token.txt
     #        - *android_abb
     publishing: *email_release
-  android-release-workflow:
-    name: Android release Workflow
-    max_build_duration: 65
-    instance_type: mac_mini_m2
+
+  ios-workflow:
+    name: Android Workflow
+    max_build_duration: 30
+    instance_type: mac_mini_m1
+    environment:
+      flutter: stable
+      xcode: latest
+    scripts:
+      - *pub_get
+      - *debug_env
+#      - *key_store
+#      - *update_appversion
+      - *update_android_package
+      - *get_logo
+      - *set_launcher_icons
+      - *get_splash
+      - *change_app_name
+      - *Inject_Firebase_iOS_Push
+#      - *get_json
+#      - *update_sdkver
+      - *build_ipa
+    artifacts:
+      - *android_apk
+      - *android_abb
+      - *ios_app
+      - flutter_build.log
+      - flutter_build2.log
+      - fcm_token.txt
+    #        - *android_abb
+    publishing: *email_release
+
+  free-apk-workflow:
+    name: Free APK Workflow
+    max_build_duration: 30
+    instance_type: mac_mini_m1
     environment:
       flutter: stable
     scripts:
@@ -472,14 +638,43 @@ workflows:
       - *get_logo
       - *set_launcher_icons
       - *get_splash
-#      - *set_splash_icons
       - *change_app_name
-      - *key_store
-      - *Inject_Firebase
-      # - *build_release_apk
-    # - *build_abb
-#     - *build_debug_apk
+      - *update_sdkver
+      - *build_app
     artifacts:
       - *android_apk
-    #        - *android_abb
+    publishing: *email_release
+
+  paid-apk-workflow:
+    name: Paid APK Workflow
+    max_build_duration: 45
+    instance_type: mac_mini_m2
+    environment:
+      flutter: stable
+    scripts:
+      - *pub_get
+      - *debug_env
+      - *key_store
+      - *update_appversion
+      - *update_android_package
+      - *get_logo
+      - *set_launcher_icons
+      - *get_splash
+      - *change_app_name
+      - *Inject_Firebase           # Push Notification
+      - *Enable_Admob              # Admob
+      - *Enable_GoogleAnalytics    # Google Analytics
+      - *Enable_AppleLogin         # Apple login
+      - *Enable_GoogleLogin        # Google login
+      - *Enable_2FA                # Two-factor authentication
+      - *Enable_BottomNav          # Bottom navigation bar
+      - *Enable_AppScreenshot      # Screenshot functionality
+      - *Enable_PullToRefresh
+      - *Enable_LoadingIndicators
+      - *Enable_DeepLinking
+      - *Enable_AdvancedPermissions  # GPS, Camera, etc.
+      - *update_sdkver
+      - *build_app
+    artifacts:
+      - *android_apk
     publishing: *email_release
