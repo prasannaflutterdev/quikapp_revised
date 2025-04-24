@@ -13,27 +13,27 @@ import 'module/myapp.dart';
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
-bool? hasInternet;
-
+// bool? hasInternet;
+//
 const bool pushNotify = bool.fromEnvironment('PUSH_NOTIFY', defaultValue: false);
-const bool isCameraEnabled = bool.fromEnvironment('IS_CAMERA', defaultValue: false);
-const isLocationEnabled = bool.fromEnvironment('IS_LOCATION');
-const isBiometricEnabled = bool.fromEnvironment('IS_BIOMETRIC');
-const isMicEnabled = bool.fromEnvironment('IS_MIC');
-const isContactEnabled = bool.fromEnvironment('IS_CONTACT');
-const isCalendarEnabled = bool.fromEnvironment('IS_CALENDAR');
-const isNotificationEnabled = bool.fromEnvironment('IS_NOTIFICATION');
-const isStorageEnabled = bool.fromEnvironment('IS_STORAGE');
-const splashDuration = int.fromEnvironment('SPLASH_DURATION', defaultValue: 3);
-const isSplashEnabled = bool.fromEnvironment('IS_SPLASH', defaultValue: false);
-const String splashUrl = String.fromEnvironment('SPLASH');
-const String splashBgUrl = String.fromEnvironment('SPLASH_BG');
-const String splashTagline = String.fromEnvironment('SPLASH_TAGLINE');
-const String splashAnimation = String.fromEnvironment('SPLASH_ANIMATION', defaultValue: 'zoom');
-const bool isPullDown = bool.fromEnvironment('IS_PULLDOWN', defaultValue: false);
+// const bool isCameraEnabled = bool.fromEnvironment('IS_CAMERA', defaultValue: false);
+// const isLocationEnabled = bool.fromEnvironment('IS_LOCATION');
+// const isBiometricEnabled = bool.fromEnvironment('IS_BIOMETRIC');
+// const isMicEnabled = bool.fromEnvironment('IS_MIC');
+// const isContactEnabled = bool.fromEnvironment('IS_CONTACT');
+// const isCalendarEnabled = bool.fromEnvironment('IS_CALENDAR');
+// const isNotificationEnabled = bool.fromEnvironment('IS_NOTIFICATION');
+// const isStorageEnabled = bool.fromEnvironment('IS_STORAGE');
+// const splashDuration = int.fromEnvironment('SPLASH_DURATION', defaultValue: 3);
+// const isSplashEnabled = bool.fromEnvironment('IS_SPLASH', defaultValue: false);
+// const String splashUrl = String.fromEnvironment('SPLASH');
+// const String splashBgUrl = String.fromEnvironment('SPLASH_BG');
+// const String splashTagline = String.fromEnvironment('SPLASH_TAGLINE');
+// const String splashAnimation = String.fromEnvironment('SPLASH_ANIMATION', defaultValue: 'zoom');
+// const bool isPullDown = bool.fromEnvironment('IS_PULLDOWN', defaultValue: false);
 
 
-WebViewEnvironment? webViewEnvironment;
+// WebViewEnvironment? webViewEnvironment;
 
 Future<FirebaseOptions> loadFirebaseOptionsFromJson() async {
   final jsonStr = await rootBundle.loadString('assets/google-services.json');

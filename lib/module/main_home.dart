@@ -27,18 +27,18 @@ class MainHome extends StatefulWidget {
 
 class _MainHomeState extends State<MainHome> {
   final GlobalKey webViewKey = GlobalKey();
-  InAppWebViewController? webViewController;
-  late PullToRefreshController? pullToRefreshController;
-
-  // final Color backgroundColor = _parseHexColor(const String.fromEnvironment('SPLASH_BG_COLOR', defaultValue: "#ffffff"));
-  final Color taglineColor = _parseHexColor(const String.fromEnvironment('SPLASH_TAGLINE_COLOR', defaultValue: "#000000"));
-  int _currentIndex = 0;
-  static Color _parseHexColor(String hexColor) {
-    hexColor = hexColor.replaceFirst('#', '');
-    if (hexColor.length == 6) hexColor = 'FF$hexColor';
-    return Color(int.parse('0x$hexColor'));
-  }
+  final bool pushNotify = bool.fromEnvironment('PUSH_NOTIFY', defaultValue: false);
   final bool isBottomMenu = const String.fromEnvironment('IS_BOTTOMMENU', defaultValue: 'false') == 'true';
+  final bool isPullDown = bool.fromEnvironment('IS_PULLDOWN', defaultValue: false);
+  final bool isCameraEnabled = bool.fromEnvironment('IS_CAMERA', defaultValue: false);
+  final bool isDeeplink = bool.fromEnvironment('IS_DEEPLINK', defaultValue: false);
+  final isLocationEnabled = bool.fromEnvironment('IS_LOCATION');
+  final isBiometricEnabled = bool.fromEnvironment('IS_BIOMETRIC');
+  final isMicEnabled = bool.fromEnvironment('IS_MIC');
+  final isContactEnabled = bool.fromEnvironment('IS_CONTACT');
+  final isCalendarEnabled = bool.fromEnvironment('IS_CALENDAR');
+  final isNotificationEnabled = bool.fromEnvironment('IS_NOTIFICATION');
+  final isStorageEnabled = bool.fromEnvironment('IS_STORAGE');
   final String bottomMenuRaw = const String.fromEnvironment('BOTTOMMENU_ITEMS', defaultValue: '[]');
   final backgroundColor = const String.fromEnvironment('BOTTOMMENU_BG_COLOR', defaultValue: '#FFFFFF');
   final iconColor = const String.fromEnvironment('BOTTOMMENU_ICON_COLOR', defaultValue: '#000000');
@@ -47,6 +47,23 @@ class _MainHomeState extends State<MainHome> {
   final iconPosition = const String.fromEnvironment('BOTTOMMENU_ICON_POSITION', defaultValue: 'above');
   final visibleOn = const String.fromEnvironment('BOTTOMMENU_VISIBLE_ON', defaultValue: 'all');
 
+  // final Color backgroundColor = _parseHexColor(const String.fromEnvironment('SPLASH_BG_COLOR', defaultValue: "#ffffff"));
+  final Color taglineColor = _parseHexColor(const String.fromEnvironment('SPLASH_TAGLINE_COLOR', defaultValue: "#000000"));
+  int _currentIndex = 0;
+
+  InAppWebViewController? webViewController;
+  WebViewEnvironment? webViewEnvironment;
+  late PullToRefreshController? pullToRefreshController;
+
+
+
+  static Color _parseHexColor(String hexColor) {
+    hexColor = hexColor.replaceFirst('#', '');
+    if (hexColor.length == 6) hexColor = 'FF$hexColor';
+    return Color(int.parse('0x$hexColor'));
+  }
+
+  bool? hasInternet;
 // Convert the JSON string into a List of menu objects
   List<Map<String, dynamic>> bottomMenuItems = [];
 
@@ -351,7 +368,8 @@ class _MainHomeState extends State<MainHome> {
     return true; // Exit app
   }
 
-
+  bool isLoading = true;
+  bool hasError = false;
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -362,30 +380,120 @@ class _MainHomeState extends State<MainHome> {
           body: SafeArea(
             child: Builder(
               builder: (context) {
-                if (hasInternet == null) return const Center(child: CircularProgressIndicator());
-                if (hasInternet == false) return const Center(child: Text('📴 No Internet Connection'));
-                return InAppWebView(
-                  key: webViewKey,
-                  webViewEnvironment: webViewEnvironment,
-                  initialUrlRequest: URLRequest(url: WebUri(widget.webUrl)),
-                  pullToRefreshController: pullToRefreshController,
-                  onWebViewCreated: (controller) {
-                    webViewController = controller;
-                    if (_pendingInitialUrl != null) {
-                      webViewController?.loadUrl(urlRequest: URLRequest(url: WebUri(_pendingInitialUrl!)));
-                      _pendingInitialUrl = null;
-                    }
-                  },
-                  shouldOverrideUrlLoading: (controller, navigationAction) async {
-                    final uri = navigationAction.request.url;
-                    if (uri != null && !uri.toString().contains(widget.webUrl)) {
-                      if (await canLaunchUrl(uri)) {
-                        await launchUrl(uri, mode: LaunchMode.externalApplication);
-                        return NavigationActionPolicy.CANCEL;
-                      }
-                    }
-                    return NavigationActionPolicy.ALLOW;
-                  },
+                if (hasInternet == null) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                if (hasInternet == false) {
+                  return const Center(child: Text('📴 No Internet Connection'));
+                }
+
+                return Stack(
+                  children: [
+                    if (!hasError)
+                      InAppWebView(
+                        key: webViewKey,
+                        webViewEnvironment: webViewEnvironment,
+                        initialUrlRequest: URLRequest(url: WebUri(widget.webUrl)),
+                        pullToRefreshController: pullToRefreshController,
+                        onWebViewCreated: (controller) {
+                          webViewController = controller;
+                          if (_pendingInitialUrl != null) {
+                            controller.loadUrl(
+                              urlRequest: URLRequest(url: WebUri(_pendingInitialUrl!)),
+                            );
+                            _pendingInitialUrl = null;
+                          }
+                        },
+                        shouldOverrideUrlLoading: (controller, navigationAction) async {
+                          final uri = navigationAction.request.url;
+                          if (uri != null && !uri.toString().contains(widget.webUrl)) {
+                            if (isDeeplink) {
+                              if (await canLaunchUrl(uri)) {
+                                await launchUrl(uri, mode: LaunchMode.externalApplication);
+                                return NavigationActionPolicy.CANCEL;
+                              }
+                            } else {
+                              // block all external URL loading if deeplink is disabled
+                              Fluttertoast.showToast(
+                                msg: "External links are disabled",
+                                toastLength: Toast.LENGTH_SHORT,
+                                gravity: ToastGravity.BOTTOM,
+                              );
+                              return NavigationActionPolicy.CANCEL;
+                            }
+                          }
+                          return NavigationActionPolicy.ALLOW;
+
+                          // if (uri != null && !uri.toString().contains(widget.webUrl)) {
+                          //   if (await canLaunchUrl(uri)) {
+                          //     await launchUrl(uri, mode: LaunchMode.externalApplication);
+                          //     return NavigationActionPolicy.CANCEL;
+                          //   }
+                          // }
+                          // return NavigationActionPolicy.ALLOW;
+                        },
+                        onLoadStart: (controller, url) {
+                          setState(() {
+                            isLoading = true;
+                            hasError = false;
+                          });
+                        },
+                        onLoadStop: (controller, url) async {
+                          setState(() => isLoading = false);
+                        },
+                        onLoadError: (controller, url, code, message) {
+                          debugPrint('Load error [$code]: $message');
+                          setState(() {
+                            hasError = true;
+                            isLoading = false;
+                          });
+                        },
+                        onLoadHttpError: (controller, url, statusCode, description) {
+                          debugPrint('HTTP error [$statusCode]: $description');
+                          setState(() {
+                            hasError = true;
+                            isLoading = false;
+                          });
+                        },
+                        onConsoleMessage: (controller, consoleMessage) {
+                          debugPrint('Console: ${consoleMessage.message}');
+                        },
+                      ),
+
+                    // Loading Indicator
+                    if (isLoading)
+                      const Center(child: CircularProgressIndicator()),
+
+                    // Error Screen
+                    if (hasError)
+                      Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                            const SizedBox(height: 16),
+                            const Text(
+                              "Oops! Couldn't load the site.",
+                              style: TextStyle(fontSize: 18),
+                            ),
+                            const SizedBox(height: 16),
+                            ElevatedButton(
+                              onPressed: () {
+                                setState(() {
+                                  hasError = false;
+                                  isLoading = true;
+                                });
+                                webViewController?.loadUrl(
+                                  urlRequest: URLRequest(url: WebUri(widget.webUrl)),
+                                );
+                              },
+                              child: const Text("Retry"),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
                 );
               },
             ),

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../main.dart';
+// import '../main.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -17,10 +17,10 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   late final Animation<Offset> _slideAnimation;
   late final Animation<double> _rotationAnimation;
 
-  // final String splashUrl = const String.fromEnvironment('SPLASH');
-  // final String splashBgUrl = const String.fromEnvironment('SPLASH_BG');
-  // final String splashTagline = const String.fromEnvironment('SPLASH_TAGLINE');
-  // final String splashAnimation = const String.fromEnvironment('SPLASH_ANIMATION', defaultValue: 'zoom');
+  final String splashUrl = const String.fromEnvironment('SPLASH');
+  final String splashBgUrl = const String.fromEnvironment('SPLASH_BG');
+  final String splashTagline = const String.fromEnvironment('SPLASH_TAGLINE');
+  final String splashAnimation = const String.fromEnvironment('SPLASH_ANIMATION', defaultValue: 'zoom');
   final Color backgroundColor = _parseHexColor(const String.fromEnvironment('SPLASH_BG_COLOR', defaultValue: "#ffffff"));
   final Color taglineColor = _parseHexColor(const String.fromEnvironment('SPLASH_TAGLINE_COLOR', defaultValue: "#000000"));
 

@@ -50,6 +50,7 @@ definitions:
         BOTTOMMENU_ACTIVE_TAB_COLOR: $BOTTOMMENU_ACTIVE_TAB_COLOR
         BOTTOMMENU_ICON_POSITION: $BOTTOMMENU_ICON_POSITION
         BOTTOMMENU_VISIBLE_ON: $BOTTOMMENU_VISIBLE_ON
+        IS_DEEPLINK: $IS_DEEPLINK
         flutter_build_flags: >
           --dart-define=WEB_URL="$WEB_URL"
           --dart-define=PUSH_NOTIFY="$PUSH_NOTIFY"
@@ -71,6 +72,7 @@ definitions:
           --dart-define=BOTTOMMENU_ACTIVE_TAB_COLOR="$BOTTOMMENU_ACTIVE_TAB_COLOR"
           --dart-define=BOTTOMMENU_ICON_POSITION="$BOTTOMMENU_ICON_POSITION"
           --dart-define=BOTTOMMENU_VISIBLE_ON="$BOTTOMMENU_VISIBLE_ON"
+          --dart-define=IS_DEEPLINK="$IS_DEEPLINK"
           --dart-define=IS_CAMERA="$IS_CAMERA"
           --dart-define=IS_LOCATION="$IS_LOCATION"
           --dart-define=IS_BIOMETRIC="$IS_BIOMETRIC"
@@ -169,6 +171,9 @@ definitions:
         
         echo "\n Pull Down to Refresh Configuration:\n"
         echo "IS_PULLDOWN: $IS_PULLDOWN"
+        
+        echo "\n DEEPLINK Configuration:\n"
+        echo "IS_DEEPLINK: $IS_DEEPLINK"
 
     - &get_logo
       name: Get logo image from logoUrl
