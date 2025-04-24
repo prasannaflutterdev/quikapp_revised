@@ -327,6 +327,14 @@ class _MainHomeState extends State<MainHome> {
 
   /// ✅ Back button double-press exit
   Future<bool> _onBackPressed() async {
+    if (webViewController != null) {
+      bool canGoBack = await webViewController!.canGoBack();
+      if (canGoBack) {
+        await webViewController!.goBack();
+        return false; // Don't exit app
+      }
+    }
+
     DateTime now = DateTime.now();
     if (_lastBackPressed == null || now.difference(_lastBackPressed!) > Duration(seconds: 2)) {
       _lastBackPressed = now;
@@ -339,7 +347,8 @@ class _MainHomeState extends State<MainHome> {
       );
       return false;
     }
-    return true;
+
+    return true; // Exit app
   }
 
 
