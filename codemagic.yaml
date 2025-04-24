@@ -108,15 +108,31 @@ definitions:
     - &debug_env
       name: Debug Environment Variables
       script: |
+        echo "\n App Name & Version\n"
+        echo "APP_NAME: $APP_NAME"
+        echo "ORG_NAME: $ORG_NAME"
+        echo "WEB_URL: $WEB_URL"
         echo "VERSION_NAME: $VERSION_NAME"           
         echo "VERSION_CODE: $VERSION_CODE" 
+        echo "PKG_NAME: $PKG_NAME"
+        
+        echo "\n Android Keystore\n"
         echo "KEY_STORE: $KEY_STORE"
         echo "CM_KEYSTORE_PASSWORD: $CM_KEYSTORE_PASSWORD"
         echo "CM_KEY_ALIAS: $CM_KEY_ALIAS"
         echo "CM_KEY_PASSWORD: $CM_KEY_PASSWORD"
-        echo "APP_NAME: $APP_NAME"
-        echo "ORG_NAME: $ORG_NAME"
-        echo "WEB_URL: $WEB_URL"
+        
+        echo "\n IOS Keystore\n"
+        echo "APNS_KEY_ID: $APNS_KEY_ID"
+        echo "APNS_TEAM_ID: $APNS_TEAM_ID"
+        echo "APNS_AUTH_KEY_URL: $APNS_AUTH_KEY_URL"
+        
+        echo "\n Firebase Android config file:\n"
+        echo "firebase_config_android: $firebase_config_android"
+        echo "\n Firebase IOS config file:\n"
+        echo "firebase_config_ios: $firebase_config_ios"
+        
+        echo "\n Splash Configuration:\n"
         echo "IS_SPLASH: $IS_SPLASH"
         echo "SPLASH: $SPLASH"
         echo "SPLASH_BG:$SPLASH_BG"
@@ -125,22 +141,11 @@ definitions:
         echo "SPLASH_TAGLINE_COLOR: $SPLASH_TAGLINE_COLOR"
         echo "SPLASH_ANIMATION: $SPLASH_ANIMATION"
         echo "SPLASH_DURATION: $SPLASH_DURATION"
-        echo "firebase_config_ios: $firebase_config_ios"
-        echo "firebase_config_android: $firebase_config_android"
-        echo "APNS_KEY_ID: $APNS_KEY_ID"
-        echo "APNS_TEAM_ID: $APNS_TEAM_ID"
-        echo "APNS_AUTH_KEY_URL: $APNS_AUTH_KEY_URL"
-        echo "PKG_NAME: $PKG_NAME"
-        echo "EMAIL_ID: $EMAIL_ID"
+        
+        echo "\n Push Notification Configuration:\n"
         echo "PUSH_NOTIFY: $PUSH_NOTIFY"
-        echo "IS_CAMERA: $IS_CAMERA"
-        echo "IS_LOCATION: $IS_LOCATION"
-        echo "IS_MIC: $IS_MIC"
-        echo "IS_NOTIFICATION: $IS_NOTIFICATION"
-        echo "IS_CONTACT: $IS_CONTACT"
-        echo "IS_BIOMETRIC: $IS_BIOMETRIC"
-        echo "IS_CALENDAR: $IS_CALENDAR"
-        echo "IS_PULLDOWN: $IS_PULLDOWN"
+        
+        echo "\n Bottom Navigation Configuration:\n"
         echo "IS_BOTTOMMENU: $IS_BOTTOMMENU"
         echo "BOTTOMMENU_ITEMS: $BOTTOMMENU_ITEMS"
         echo "BOTTOMMENU_BG_COLOR: $BOTTOMMENU_BG_COLOR"  
@@ -149,7 +154,46 @@ definitions:
         echo "BOTTOMMENU_ACTIVE_TAB_COLOR: $BOTTOMMENU_ACTIVE_TAB_COLOR"
         echo "BOTTOMMENU_ICON_POSITION: $BOTTOMMENU_ICON_POSITION"
         echo "BOTTOMMENU_VISIBLE_ON: $BOTTOMMENU_VISIBLE_ON"
+        
+        echo "\n Permissions:\n"
+        echo "IS_CAMERA: $IS_CAMERA"
+        echo "IS_LOCATION: $IS_LOCATION"
+        echo "IS_MIC: $IS_MIC"
+        echo "IS_NOTIFICATION: $IS_NOTIFICATION"
+        echo "IS_CONTACT: $IS_CONTACT"
+        echo "IS_BIOMETRIC: $IS_BIOMETRIC"
+        echo "IS_CALENDAR: $IS_CALENDAR"
+        
+        echo "\n Publish Configuration:\n"
+        echo "EMAIL_ID: $EMAIL_ID"
+        
+        echo "\n Pull Down to Refresh Configuration:\n"
+        echo "IS_PULLDOWN: $IS_PULLDOWN"
 
+    - &get_logo
+      name: Get logo image from logoUrl
+      script: |
+        echo "🚀 Started: Downloading logo from $LOGO_URL"
+            mkdir -p assets/images/
+            wget -O assets/images/logo.png $LOGO_URL
+            if [ $? -ne 0 ]; then
+              echo "❌ Error: Failed to download logo"
+              exit 1
+            fi
+            flutter pub get
+            echo "✅ Completed: Logo downloaded"
+
+    - &set_launcher_icons
+      name: Generate Launcher Icons
+      script: |
+        flutter pub run flutter_launcher_icons:main
+        flutter pub get
+
+    - &change_app_name
+      name: Change app name
+      script: |
+        flutter pub run rename setAppName --value "$APP_NAME"
+        flutter pub get
 
     - &get_splash
       name: Get splash screen image from splash image from Url
@@ -235,6 +279,17 @@ definitions:
           echo "🧹 Cleaned up Firebase iOS config."
         fi
 
+    - &get_json
+      name: Get JSON file
+      script: |
+        if [ "$PUSH_NOTIFY" = "true" ]; then
+           echo "📥 Downloading google-services.json..."
+           wget -O android/app/google-services.json "$firebase_config_android"
+           wget -O assets/google-services.json "$firebase_config_android"
+         else
+           echo "🚫 Firebase config skipped (PUSH_NOTIFY is not true)"
+         fi
+
     - &Inject_Firebase
       name: Inject Firebase and buildscript block
       script: |
@@ -261,16 +316,6 @@ definitions:
           echo "🚫 Firebase config skipped (PUSH_NOTIFY is not true)"
         fi
 
-    - &get_json
-      name: Get JSON file
-      script: |
-       if [ "$PUSH_NOTIFY" = "true" ]; then
-          echo "📥 Downloading google-services.json..."
-          wget -O android/app/google-services.json "$firebase_config_android"
-          wget -O assets/google-services.json "$firebase_config_android"
-        else
-          echo "🚫 Firebase config skipped (PUSH_NOTIFY is not true)"
-        fi
     - &Update_SDK_Version
       name: Updating SDK Version for Android & iOS (Conditional)
       script: |
@@ -332,33 +377,7 @@ definitions:
             exit 1
           fi
 
-    - &get_logo
-      name: Get logo image from logoUrl
-      script: |
-        echo "🚀 Started: Downloading logo from $LOGO_URL"
-            mkdir -p assets/images/
-            wget -O assets/images/logo.png $LOGO_URL
-            if [ $? -ne 0 ]; then
-              echo "❌ Error: Failed to download logo"
-              exit 1
-            fi
-            flutter pub get
-            echo "✅ Completed: Logo downloaded"
-
-
-
-    - &set_launcher_icons
-      name: Generate Launcher Icons
-      script: |
-        flutter pub run flutter_launcher_icons:main
-        flutter pub get
-
-
-    - &change_app_name
-      name: Change app name
-      script: |
-        flutter pub run rename setAppName --value "$APP_NAME"
-        flutter pub get
+    
 
     - &key_store
       name: Setup Android keystore and insert Gradle signing block
@@ -417,8 +436,8 @@ definitions:
         flutter build ipa --release $flutter_build_flags > flutter_build.log
         echo "✅ IPA build completed."
 
-    - &build_app
-      name: Building App with Feature Flags
+    - &build_apk
+      name: Building Apk with Feature Flags
       script: |
         echo "✅ Building APK..."
         flutter build apk --release $flutter_build_flags > flutter_build.log
@@ -444,24 +463,23 @@ workflows:
   android-workflow:
     name: Android Workflow
     max_build_duration: 30
-    instance_type: mac_mini_m1
+    instance_type: mac_mini_m2
     environment:
       flutter: stable
       xcode: latest
     scripts:
-      - *pub_get
       - *debug_env
-      - *key_store
-      - *Update_App_Version
-      - *update_package_names
       - *get_logo
       - *set_launcher_icons
-      - *get_splash
       - *change_app_name
-      - *Inject_Firebase
-      - *get_json
+      - *get_splash
+      - *Update_App_Version
+      - *update_package_names
       - *Update_SDK_Version
-      - *build_app
+      - *get_json
+      - *Inject_Firebase
+      - *key_store
+      - *build_apk
     artifacts:
       - *android_apk
       - *android_abb
@@ -471,23 +489,22 @@ workflows:
     publishing: *email_release
 
   ios-workflow:
-    name: Android Workflow
+    name: ios Workflow
     max_build_duration: 30
-    instance_type: mac_mini_m1
+    instance_type: mac_mini_m2
     environment:
       flutter: stable
       xcode: latest
     scripts:
-      - *pub_get
       - *debug_env
-      - *Update_App_Version
-      - *update_package_names
       - *get_logo
       - *set_launcher_icons
-      - *get_splash
       - *change_app_name
-      - *Inject_Firebase_iOS_Push
+      - *get_splash
+      - *Update_App_Version
+      - *update_package_names
       - *Update_SDK_Version
+      - *Inject_Firebase_iOS_Push
       - *build_ipa
     artifacts:
       - *ios_app
@@ -512,7 +529,7 @@ workflows:
       - *get_splash
       - *change_app_name
       - *Update_SDK_Version
-      - *build_app
+      - *build_apk
     artifacts:
       - *android_apk
     publishing: *email_release
@@ -546,7 +563,7 @@ workflows:
       - *Enable_DeepLinking
       - *Enable_AdvancedPermissions  # GPS, Camera, etc.
       - *Update_SDK_Version
-      - *build_app
+      - *build_apk
     artifacts:
       - *android_apk
     publishing: *email_release
